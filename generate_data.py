@@ -1,7 +1,6 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-import matplotlib.pyplot as plt
 
 
 np.random.seed(0)
@@ -74,8 +73,6 @@ def generate_data():
                 t *= 1.3
             else:
                 t *= 0.4
-        # response[i] = t
-        # response[i] = np.tanh(t/5.5+0.5)
         response[i] = np.random.binomial(1, (np.tanh(t/5.5+0.5) + 1)/2)
 
     price = np.array([price])
@@ -87,7 +84,8 @@ def generate_data():
     return data, cols
 
 
-raw_data, cols = generate_data()
-df = pd.DataFrame(raw_data, columns=cols)
+raw_data, columns = generate_data()
+df = pd.DataFrame(raw_data, columns=columns)
+
 np.save('./data/raw_data.npy', raw_data)
-df.to_csv('./data/dataframe.csv')
+df.to_csv('./data/dataframe.csv', index=False)
