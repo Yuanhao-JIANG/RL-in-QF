@@ -3,12 +3,13 @@ import pandas as pd
 from scipy import stats
 
 
-np.random.seed(0)
 data_size = 1000
 feature_size = 15
 
 
-def generate_data():
+def generate_raw_data(save=False, path='./data/raw_data.npy', seed=0):
+    np.random.seed(seed)
+
     feature_data = np.zeros((feature_size, data_size))
     cols = []
 
@@ -81,11 +82,24 @@ def generate_data():
     cols.append('response')
 
     data = np.concatenate((feature_data, price.T, response.T), axis=1)
+    if save:
+        np.save(path, data)
     return data, cols
 
 
-raw_data, columns = generate_data()
-df = pd.DataFrame(raw_data, columns=columns)
+def generate_dataframe(save=False, path='./data/dataframe.csv', seed=0):
+    raw_data, columns = generate_raw_data(seed=seed)
+    df = pd.DataFrame(raw_data, columns=columns)
+    if save:
+        df.to_csv(path, index=False)
+    return df
 
-np.save('./data/raw_data.npy', raw_data)
-df.to_csv('./data/dataframe.csv', index=False)
+
+# generate data to fit glm
+# generate_dataframe(True, './data/dataframe_fit.csv', 0)
+
+# generate data to train
+# generate_dataframe(True, './data/dataframe_train.csv', 10)
+
+# generate data to test
+# generate_dataframe(True, './data/dataframe_test.csv', 20)
