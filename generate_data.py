@@ -3,11 +3,10 @@ import pandas as pd
 from scipy import stats
 
 
-data_size = 1000
 feature_size = 15
 
 
-def generate_raw_data(save=False, path='./data/raw_data.npy', seed=0):
+def generate_raw_data(constant_c=None, data_size=1000, save=False, path='./data/raw_data.npy', seed=0):
     np.random.seed(seed)
 
     feature_data = np.zeros((feature_size, data_size))
@@ -52,9 +51,13 @@ def generate_raw_data(save=False, path='./data/raw_data.npy', seed=0):
     feature_data = np.transpose(feature_data)
 
     # price
-    price_mean, price_var = 1400, 700
-    price = stats.truncnorm.rvs((400-price_mean)/price_var, (2700-price_mean)/price_var,
-                                loc=price_mean, scale=price_var, size=data_size)
+    if constant_c is None:
+        price_mean, price_var = 1400, 700
+        price = stats.truncnorm.rvs((400-price_mean)/price_var, (2700-price_mean)/price_var,
+                                    loc=price_mean, scale=price_var, size=data_size)
+    else:
+        price_mean = constant_c
+        price = [constant_c]*data_size
 
     # response
     response = np.zeros(data_size)
@@ -87,8 +90,8 @@ def generate_raw_data(save=False, path='./data/raw_data.npy', seed=0):
     return data, cols
 
 
-def generate_dataframe(save=False, path='./data/dataframe.csv', seed=0):
-    raw_data, columns = generate_raw_data(seed=seed)
+def generate_dataframe(constant_c=None, data_size=1000, save=False, path='./data/dataframe.csv', seed=0):
+    raw_data, columns = generate_raw_data(constant_c=constant_c, data_size=data_size, seed=seed)
     df = pd.DataFrame(raw_data, columns=columns)
     if save:
         df.to_csv(path, index=False)
@@ -96,10 +99,10 @@ def generate_dataframe(save=False, path='./data/dataframe.csv', seed=0):
 
 
 # generate data to fit glm
-# generate_dataframe(True, './data/dataframe_fit.csv', 0)
+# generate_dataframe(save=True, path='./data/dataframe_fit.csv', seed=0)
 
 # generate data to train
-# generate_dataframe(True, './data/dataframe_train.csv', 10)
+# generate_dataframe(save=True, path='./data/dataframe_train.csv', seed=10)
 
 # generate data to test
-# generate_dataframe(True, './data/dataframe_test.csv', 20)
+# generate_dataframe(save=True, path='./data/dataframe_test.csv', seed=20)
