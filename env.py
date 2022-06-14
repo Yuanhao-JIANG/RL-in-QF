@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
@@ -28,5 +29,40 @@ def add_observations(df_obs, df):
     return pd.concat([df, df_obs], ignore_index=True)
 
 
-def promote(df_pre, c, glm):
-    pass
+def update_df(df, c):
+    return df
+
+
+def promote(df, c, glm):
+    """
+    promote with a price
+    :param df: current (grouped) dataframe (state)
+    :param c: promoted price
+    :param glm: the environment (fitted glm)
+    :return: reward, the (grouped) dataframe after promotion
+    """
+
+    # add price to dataframe
+    df['price'] = c
+
+    # glm generated response -> 1: buyer, 0: won't buy
+    pred = glm.predict(df).gt(0.5).astype(int)  # <class 'pandas.core.series.Series'>
+
+    # add glm generated response to dataframe
+    df['response'] = pred
+
+    # total profit
+    r1 = (pred*(c - (df['car_cost']/300000 + df['rand_feature_0']/10)*c)).sum()
+
+    # group buyers percentage, there are 4 groups
+    k = 4
+    p = np.zeros(k)
+    for i in range(k):
+        p[i] = df.groupby(['group', 'response']).size()[i][1] / df.groupby(['group']).size()[i]
+
+    # variance of group buyers percentage, we want balanced buyers count for different groups
+    r2 = - np.var(p, ddof=1)
+
+    # TODO: r2 is too small compare to r1, need to scale it
+
+    return r1 + r2, update_df(df, c)
