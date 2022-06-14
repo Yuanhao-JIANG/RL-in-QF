@@ -6,7 +6,8 @@ from scipy import stats
 feature_size = 15
 
 
-def generate_raw_data(constant_c=None, data_size=1000, save=False, path='./data/raw_data.npy', seed=0):
+def generate_raw_data(constant_c=None, data_size=1000, without_response=False, save=False,
+                      path='./data/raw_data.npy', seed=0):
     np.random.seed(seed)
 
     feature_data = np.zeros((feature_size, data_size))
@@ -61,23 +62,24 @@ def generate_raw_data(constant_c=None, data_size=1000, save=False, path='./data/
 
     # response
     response = np.zeros(data_size)
-    for i in range(data_size):
-        t = age_mean/feature_data[i][1] + 1.2*miles_mean/feature_data[i][3] - 4*car_cost_mean/feature_data[i][2] \
-            - 2*10*.7/(feature_data[i][5]+1) - (feature_data[i][6] - 49)/50 + 1.5*feature_data[i][10] \
-            + 0.5*feature_data[i][11] - 2*feature_data[i][12] - 1.5*feature_data[i][13] + 2.5*price_mean/price[i]
-        # 50% normal(0, 1) and 60% t
-        if abs(feature_data[i][7]) < 0.67 and abs(feature_data[i][9]) < 0.92:
-            if t > 0:
-                t *= 1.3
-            else:
-                t *= 0.4
-        # first 70% gamma and outside 10% normal(2, 4)
-        if feature_data[i][8] < 7.2 and abs(feature_data[i][14]) > 2.5:
-            if t > 0:
-                t *= 1.3
-            else:
-                t *= 0.4
-        response[i] = np.random.binomial(1, (np.tanh(t/5.5+0.5) + 1)/2)
+    if not without_response:
+        for i in range(data_size):
+            t = age_mean/feature_data[i][1] + 1.2*miles_mean/feature_data[i][3] - 4*car_cost_mean/feature_data[i][2] \
+                - 2*10*.7/(feature_data[i][5]+1) - (feature_data[i][6] - 49)/50 + 1.5*feature_data[i][10] \
+                + 0.5*feature_data[i][11] - 2*feature_data[i][12] - 1.5*feature_data[i][13] + 2.5*price_mean/price[i]
+            # 50% normal(0, 1) and 60% t
+            if abs(feature_data[i][7]) < 0.67 and abs(feature_data[i][9]) < 0.92:
+                if t > 0:
+                    t *= 1.3
+                else:
+                    t *= 0.4
+            # first 70% gamma and outside 10% normal(2, 4)
+            if feature_data[i][8] < 7.2 and abs(feature_data[i][14]) > 2.5:
+                if t > 0:
+                    t *= 1.3
+                else:
+                    t *= 0.4
+            response[i] = np.random.binomial(1, (np.tanh(t/5.5+0.5) + 1)/2)
 
     price = np.array([price])
     response = np.array([response])
@@ -90,8 +92,10 @@ def generate_raw_data(constant_c=None, data_size=1000, save=False, path='./data/
     return data, cols
 
 
-def generate_dataframe(constant_c=None, data_size=1000, save=False, path='./data/dataframe.csv', seed=0):
-    raw_data, columns = generate_raw_data(constant_c=constant_c, data_size=data_size, seed=seed)
+def generate_dataframe(constant_c=None, data_size=1000, without_response=False, save=False,
+                       path='./data/dataframe.csv', seed=0):
+    raw_data, columns = generate_raw_data(constant_c=constant_c, data_size=data_size,
+                                          without_response=without_response, seed=seed)
     df = pd.DataFrame(raw_data, columns=columns)
     if save:
         df.to_csv(path, index=False)
@@ -102,7 +106,7 @@ def generate_dataframe(constant_c=None, data_size=1000, save=False, path='./data
 # generate_dataframe(save=True, path='./data/dataframe_fit.csv', seed=0)
 
 # generate data to train
-# generate_dataframe(save=True, path='./data/dataframe_train.csv', seed=10)
+# generate_dataframe(save=True, path='./data/dataframe_train.csv', without_response=True, seed=10)
 
 # generate data to test
-# generate_dataframe(save=True, path='./data/dataframe_test.csv', seed=20)
+# generate_dataframe(save=True, path='./data/dataframe_test.csv', without_response=True, seed=20)
