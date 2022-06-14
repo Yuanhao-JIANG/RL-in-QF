@@ -25,3 +25,6 @@ def test_glm(glm_path='./data/glm.model', test_df_path='./data/dataframe_test.cs
     df_pred = pd.DataFrame(pred, columns=['pred'])
     df_pred['true'] = instance['response']
     print(df_pred)
+
+
+# fit_glm(save=True)
