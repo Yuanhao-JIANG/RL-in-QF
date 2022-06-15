@@ -61,8 +61,6 @@ def promote(df, c, glm):
         p[i] = df.groupby(['group', 'response']).size()[i][1] / df.groupby(['group']).size()[i]
 
     # variance of group buyers percentage, we want balanced buyers count for different groups
-    r2 = - np.var(p, ddof=1)
+    r2 = np.var(p, ddof=1)
 
-    # TODO: r2 is too small compare to r1, need to scale it
-
-    return r1 + r2, update_df(df, c)
+    return np.max((0.6 - np.sqrt(r2))*r1, 0), update_df(df, c)
