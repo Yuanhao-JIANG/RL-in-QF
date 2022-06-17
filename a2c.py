@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import torch
 import sys
-import gym
 import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
@@ -121,6 +120,8 @@ def a2c(environment):
         ac_optimizer.zero_grad()
         ac_loss.backward()
         ac_optimizer.step()
+
+    torch.save(actor_critic.state_dict(), './data/a2c_model.pth')
 
 
 df_train = pd.read_csv('./data/dataframe_train.csv')
