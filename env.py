@@ -1,5 +1,6 @@
 import pandas as pd
 import numpy as np
+import torch
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
@@ -12,7 +13,7 @@ class Env:
         self.df = df
 
     def reset(self):
-        return count_group(self.df)
+        return torch.tensor(count_group(self.df))
 
     def step(self, c):
         """
@@ -33,17 +34,13 @@ class Env:
         # total profit
         r1 = (pred * (c - (self.df['car_cost'] / 300000 + self.df['rand_feature_0'] / 10) * c)).sum()
 
-        # group buyers percentage, there are 4 groups
-        k = 4
-        p = np.zeros(k)
-        for i in range(k):
-            p[i] = self.df.groupby(['group', 'response']).size()[i][1] / self.df.groupby(['group']).size()[i]
+        p = count_group(self.df)
 
         # variance of group buyers percentage, we want balanced buyers count for different groups
         r2 = np.var(p, ddof=1)
 
         # currently keep df unchanged
-        return np.max((0.6 - np.sqrt(r2)) * r1, 0), count_group(self.df)
+        return np.max((0.6 - np.sqrt(r2)) * r1, 0), torch.tensor(p)
 
 
 def add_group(df):
@@ -60,9 +57,22 @@ def add_group(df):
     df['group'] = (df['age'] // 40) * 2 + df['car_cost'].__gt__(70000).astype(int)
 
 
+# group buyers percentage, there are 4 groups
 def count_group(df):
-    t = df.groupby(['group']).size()
-    return (t/t.sum()).values
+    g = list(map(int, df.groupby(['group']).groups.keys()))
+    p = np.zeros(4)
+    for i in range(len(g)):
+        choice = list(map(int, df.groupby(['group', 'response']).size()[i].keys()))
+        if choice[0] == 1:
+            buyers = df.groupby(['group', 'response']).size()[i][0]
+        elif len(choice) == 2:
+            buyers = df.groupby(['group', 'response']).size()[i][0]
+        else:
+            buyers = 0
+
+        p[g[i]] = buyers / df.groupby(['group']).size()[i]
+
+    return p
 
 
 def add_observations(df_obs, df):
