@@ -6,6 +6,42 @@ from scipy import stats
 feature_size = 15
 
 
+def generate_customer():
+    customer = np.zeros(feature_size)
+
+    # some generic feature:
+    # gender
+    customer[0] = np.random.binomial(1, .5, 1)
+
+    # age
+    age_mean, age_var = 28, 25
+    customer[1] = stats.truncnorm.rvs((18 - age_mean) / age_var, (80 - age_mean) / age_var,
+                                      loc=age_mean, scale=age_var, size=1)
+    # car cost
+    car_cost_mean, car_cost_var = 39000, 50000
+    customer[2] = stats.truncnorm.rvs((10000 - car_cost_mean) / car_cost_var, (400000 - car_cost_mean) / car_cost_var,
+                                      loc=car_cost_mean, scale=car_cost_var, size=1)
+    # miles
+    miles_mean, miles_var = 8000, 50000
+    customer[3] = stats.truncnorm.rvs((200 - miles_mean) / miles_var, (250000 - miles_mean) / miles_var,
+                                      loc=miles_mean, scale=miles_var, size=1)
+    # brand
+    customer[4] = np.random.uniform(0, 100, 1)
+    # some random feature:
+    customer[5] = np.random.binomial(10, .7, 1)
+    customer[6] = np.random.uniform(50, 100, 1)
+    customer[7] = np.random.normal(0, 1, 1)
+    customer[8] = np.random.gamma(3, 2, 1)
+    customer[9] = np.random.standard_t(5, 1)
+    customer[10] = np.random.normal(0, 1, 1)
+    customer[11] = np.random.normal(1, 2, 1)
+    customer[12] = np.random.normal(1.5, 5, 1)
+    customer[13] = np.random.normal(1, 2, 1)
+    customer[14] = np.random.normal(2, 4, 1)
+
+    return customer
+
+
 def generate_raw_data(constant_c=None, data_size=1000, without_response=False, save=False,
                       path='./data/raw_data.npy', seed=0):
     np.random.seed(seed)
