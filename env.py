@@ -29,9 +29,10 @@ class Env:
         # car_cost\age    <40,    >=40
         # <70000          0       2
         # >=70000         1       3
-        group = (self.current_customer['age'] // 40) * 2 + self.current_customer['car_cost'].__gt__(70000).astype(int)
-        self.current_customer_df = pd.DataFrame(data=np.append(self.current_customer, [0, 0, 0, group]),
-                                                columns=self.cols)
+        group = (self.current_customer[1] // 40) * 2 + self.current_customer[2].__gt__(70000).astype(int)
+        customer = np.append(self.current_customer, [0, 0, 0, group])
+        customer = np.expand_dims(customer, axis=0)
+        self.current_customer_df = pd.DataFrame(data=customer, columns=self.cols)
 
     def reset(self):
         self.get_new()
