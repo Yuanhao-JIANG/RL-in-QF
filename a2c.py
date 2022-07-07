@@ -1,5 +1,6 @@
 import torch
 import sys
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from torch.autograd import Variable
@@ -47,10 +48,13 @@ class ActorCritic(nn.Module):
 
 # train method
 def a2c(environment):
-    learning_rate = 3e-4
+    np.random.seed(123)
+    torch.manual_seed(211)
+
+    learning_rate = 3e-2
     gamma = 0.99
-    num_steps = 300
-    max_episodes = 3000
+    num_steps = 100
+    max_episodes = 2000
     num_state_features = 18
     price_low = 400
     price_high = 2700
@@ -63,8 +67,8 @@ def a2c(environment):
 
     actor_critic = actor_critic.to(device)
     actor_critic.train()
-    for episode in range(max_episodes):
 
+    for episode in range(max_episodes):
         state = torch.from_numpy(environment.reset()).to(device)
         I = 1
 
