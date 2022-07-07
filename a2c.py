@@ -1,10 +1,7 @@
-import numpy as np
-import pandas as pd
 import torch
 import sys
 import torch.nn as nn
 import torch.optim as optim
-import torch.nn.functional as F
 from torch.autograd import Variable
 import statsmodels.api as sm
 import env
@@ -14,8 +11,8 @@ import env
 class ActorCritic(nn.Module):
     def __init__(self, num_state_features, num_actions):
         super(ActorCritic, self).__init__()
-
         self.num_actions = num_actions
+
         # value
         self.critic_net = nn.Sequential(
             nn.Linear(num_state_features, 128),
@@ -35,27 +32,26 @@ class ActorCritic(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 512),
             nn.ReLU(),
-            nn.Linear(512, num_actions)
+            nn.Linear(512, num_actions),
+            nn.Softmax(dim=0)
         )
 
     def forward(self, state):
-        state = Variable(state.float().unsqueeze(0))  # [a,b,c,d] -> [[a,b,c,d]]
+        state = Variable(state.float())
 
         value = self.critic_net(state)
+        policy_distro = self.actor_net(state)
 
-        policy_dist = self.actor_net(state)
-        policy_dist = F.softmax(policy_dist, dim=1)
-
-        return value, policy_dist
+        return value, policy_distro
 
 
 # train method
 def a2c(environment):
     learning_rate = 3e-4
     gamma = 0.99
-    num_steps = 50
-    max_episodes = 2000
-    num_state_features = 4
+    num_steps = 300
+    max_episodes = 3000
+    num_state_features = 18
     price_low = 400
     price_high = 2700
     num_actions = price_high - price_low + 1
@@ -68,63 +64,45 @@ def a2c(environment):
     actor_critic = actor_critic.to(device)
     actor_critic.train()
     for episode in range(max_episodes):
-        log_probs = []
-        values = []
-        rewards = []
 
-        # go along a trajectory for num_steps steps
-        state = environment.reset()
+        state = torch.from_numpy(environment.reset()).to(device)
+        I = 1
+
+        total_reward = 0
+
         for steps in range(num_steps):
-            state = state.to(device)
             value, policy_distro = actor_critic.forward(state)
-            value, policy_distro = value.to(device), policy_distro.to(device)
-            value = value[0][0]
+            value, policy_distro = value.to(device)[0], policy_distro.to(device)
 
-            action = np.random.choice(num_actions, p=policy_distro.detach().cpu()[0].numpy())  # 0 or 1
+            action = torch.multinomial(policy_distro.cpu(), 1, replacement=True)[0]
             c = action + price_low
-            log_prob = torch.log(policy_distro.squeeze(0)[action])    # log( P(action) )
+            log_prob = torch.log(policy_distro[action])
 
-            # go to next state
-            reward, new_state = environment.step(c)
-            new_state = new_state.to(device)
-            rewards.append(reward)
-            values.append(value)
-            log_probs.append(log_prob)
+            # compute reward, go to next state to compute v'
+            reward, new_state = environment.step(c.numpy())
+            new_state = torch.from_numpy(new_state).to(device)
+            value_next, _ = actor_critic.forward(new_state)
+            value_next = value_next.to(device)[0]
+
+            advantage = (reward + gamma * value_next - value).detach()
+            critic_loss = - advantage * value
+            actor_loss = - I * advantage * log_prob
+            ac_loss = actor_loss + critic_loss
+
+            ac_optimizer.zero_grad()
+            ac_loss.backward()
+            ac_optimizer.step()
+
+            I = I * gamma
             state = new_state
+            total_reward += reward
 
-            if episode % 10 == 0 and steps == num_steps - 1:
-                # record the value for the last state to compute the last q value
-                val_last, _ = actor_critic.forward(new_state)
-                val_last = val_last[0][0]
-
-                sys.stdout.write("episode: {}, reward: {}, state: {}\n".format(episode, np.mean(rewards),
-                                                                               state.detach().cpu().numpy()))
-
-        # compute Q values
-        q_vals = values.copy()
-        q_vals[-1] = rewards[-1] + gamma * val_last
-        for t in reversed(range(len(rewards) - 1)):
-            q_vals[t] = rewards[t] + gamma * values[t + 1]
-
-        # update actor critic
-        values = torch.stack(values)
-        q_vals = torch.stack(q_vals)
-        log_probs = torch.stack(log_probs)
-
-        # using q values to approximate values
-        advantage = q_vals - values
-        critic_loss = 0.5 * (values - q_vals.detach()).pow(2).mean()
-        actor_loss = (-advantage.detach() * log_probs).mean()
-        ac_loss = actor_loss + critic_loss
-
-        ac_optimizer.zero_grad()
-        ac_loss.backward()
-        ac_optimizer.step()
+        if episode % 10 == 0:
+            sys.stdout.write("episode: {}, avg_reward: {}\n".format(episode, total_reward/num_steps))
 
     torch.save(actor_critic.state_dict(), './data/a2c_model.pth')
 
 
-df_train = pd.read_csv('./data/dataframe_train.csv')
 glm = sm.load('./data/glm.model')
-env_train = env.Env(glm, df_train)
+env_train = env.Env(glm)
 a2c(env_train)
