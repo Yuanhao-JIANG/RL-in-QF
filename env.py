@@ -1,9 +1,6 @@
 import pandas as pd
 import numpy as np
-import torch
 import generate_data
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
 
 
 class Env:
@@ -41,21 +38,27 @@ class Env:
 
         return self.state
 
+    def g(self):
+        return self.current_customer[2]/60 + 10*self.current_customer[5]
+
+    def h(self, var):
+        return np.sqrt(var)/2
+
     def step(self, c):
         # promote price to customer
         self.current_customer_df['price'] = c
 
         # glm generated response -> 1: buyer, 0: won't buy, and add this response to this customer's record
-        pred = self.glm.predict(self.current_customer_df).gt(0.5).astype(int)
+        pred = self.glm.predict(self.current_customer_df).gt(0.5).astype(int)[0]
         self.current_customer_df['response'] = pred
 
         # compute customer profit
-        pf = pred * (c - (self.current_customer['car_cost']/300000 + self.current_customer['rand_feature_0']/10) * c)
+        pf = pred * (c - self.g())
         self.current_customer_df['profit'] = pf
 
         # add the customer to the dataframe,
         # then compute the average profit, the buyers portion, and the variance of the groups
-        pd.concat([self.df, self.current_customer_df], ignore_index=True)
+        self.df = pd.concat([self.df, self.current_customer_df], ignore_index=True)
         avg_pf = self.df['profit'].mean()
         p = self.df['response'].mean()
         var = count_var(self.df)
@@ -65,23 +68,17 @@ class Env:
         self.state = np.append(self.current_customer, [avg_pf, p, var])
 
         # return reward + next state
-        return np.max(pf*(1 - np.sqrt(var)/2), 0), self.state
+        return pf*(1 - self.h(var)), self.state
 
 
 # group buyers percentage, there are 4 groups
 def count_var(df):
-    g = list(map(int, df.groupby(['group']).groups.keys()))
     p = np.zeros(4)
-    for i in range(len(g)):
-        choice = list(map(int, df.groupby(['group', 'response']).size()[i].keys()))
-        if choice[0] == 1:
-            buyers = df.groupby(['group', 'response']).size()[i][0]
-        elif len(choice) == 2:
-            buyers = df.groupby(['group', 'response']).size()[i][0]
-        else:
-            buyers = 0
-
-        p[g[i]] = buyers / df.groupby(['group']).size()[i]
-
+    group_p = df.groupby('group').mean()['response']
+    for i in range(4):
+        try:
+            p[i] = group_p.at[i]
+        except KeyError:
+            pass
     var = np.var(p)
     return var
