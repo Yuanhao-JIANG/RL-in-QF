@@ -70,6 +70,35 @@ class Env:
         # return reward + next state
         return pf*(1 - self.h(var)), self.state
 
+    # compute expected reward and expected next state, but not step to it
+    def peek_expected(self, c):
+        # promote price to customer
+        self.current_customer_df['price'] = c
+
+        # glm generated response -> 1: buyer, 0: won't buy, and add this response to this customer's record
+        pred = self.glm.predict(self.current_customer_df).gt(0.5).astype(int)[0]
+        self.current_customer_df['response'] = pred
+
+        # compute customer profit
+        pf = pred * (c - self.g())
+        self.current_customer_df['profit'] = pf
+
+        # add the customer to the dataframe,
+        # then compute the average profit, the buyers portion, and the variance of the groups
+        self.df = pd.concat([self.df, self.current_customer_df], ignore_index=True)
+        avg_pf = self.df['profit'].mean()
+        p = self.df['response'].mean()
+        var = count_var(self.df)
+
+        self.df = self.df.iloc[:-1]
+
+        # generate expected customer and state
+        expected_customer = np.array([.5, 28, 39000, 8000, 50, 7, 75, 0, 6, 0, 0, 1, 1.5, 1, 2])
+        expected_state = np.append(expected_customer, [avg_pf, p, var])
+
+        # return reward + next state
+        return pf * (1 - self.h(var)), expected_state
+
 
 # group buyers percentage, there are 4 groups
 def count_var(df):
