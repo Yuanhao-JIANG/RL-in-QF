@@ -94,22 +94,18 @@ def policy_itr(environment):
             # exit()
 
             target = torch.tensor(0.).to(device)
+            q = []
             for i in range(len(policy_distro)):
-                if policy_distro[i] > 1.6e-2:
-                    r, s_expect = environment.peek_expected(i + price_low)
+                if policy_distro[i] > 1e-3:
+                    r, s_expect = environment.peek_expected(i * price_step + price_low)
                     _, _, v = net.forward(torch.from_numpy(s_expect).to(device))
                     target += policy_distro[i].detach() * (r + gamma * v[0])
+                    if steps % 20 == 0:
+                        q.append(r + gamma * v[0].cpu())
 
             loss = (target - value).pow(2)
-
-            if steps % 10 == 0:
-                # policy improvement
-                q = []
-                for i in range(len(policy_distro)):
-                    if policy_distro[i] > 1.6e-2:
-                        r, s_expect = environment.peek_expected(i + price_low)
-                        _, _, v = net.forward(torch.from_numpy(s_expect).to(device))
-                        q.append(r + gamma * v[0].cpu())
+            if q:
+                print(len(q), ', ')
                 idx_max = np.argmax(np.array(q))
                 loss -= policy_distro[idx_max]
 
