@@ -140,9 +140,3 @@ def generate_dataframe(constant_c=None, data_size=1000, without_response=False, 
 
 # generate data to fit glm
 # generate_dataframe(save=True, path='./data/dataframe_fit.csv', seed=0)
-
-# generate data to train
-# generate_dataframe(save=True, path='./data/dataframe_train.csv', without_response=True, seed=10)
-
-# generate data to test
-# generate_dataframe(save=True, path='./data/dataframe_test.csv', without_response=True, seed=20)
