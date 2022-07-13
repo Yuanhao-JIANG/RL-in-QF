@@ -61,8 +61,8 @@ def a2c(environment):
 
     learning_rate = 3e-2
     gamma = 0.99
-    num_steps = 100
-    max_episodes = 2000
+    num_steps = 300
+    max_episodes = 3000
     num_state_features = 18
     price_low = 400
     price_high = 2700
@@ -77,14 +77,25 @@ def a2c(environment):
     actor_critic = actor_critic.to(device)
     actor_critic.train()
 
+    moving_avg_reward = 0
+
+    # plot settings:
     plt.ion()
+    fig, ax = plt.subplots()
+    ax.set_title("moving average reward with a2c")
+    ax.set_xlabel('episode')
+    ax.set_ylabel('moving average reward')
+    (line, ) = ax.plot([], [])
+    moving_avg_reward_pool = []
+    episode_pool = []
+    moving_avg_reward_pool_lim = None
+    ax.set(xlim=(0, 1))
 
     for episode in range(max_episodes):
         state = torch.from_numpy(environment.reset()).to(device)
         I = 1
-        total_reward = 0
 
-        for steps in range(num_steps):
+        for step in range(num_steps):
             value, policy_distro = actor_critic.forward(state)
             value, policy_distro = value.to(device)[0], policy_distro.to(device)
 
@@ -109,12 +120,29 @@ def a2c(environment):
 
             I = I * gamma
             state = new_state
-            total_reward += reward
+            moving_avg_reward += (reward - moving_avg_reward)/(episode * num_steps + step + 1)
 
         if episode % 5 == 0:
-            sys.stdout.write("Episode: {}, avg_reward: {}\n".format(episode, total_reward/num_steps))
-            plt.plot(episode, total_reward/num_steps, 'o')
-            plt.pause(0.25)
+            sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
+
+            # update plot settings
+            if moving_avg_reward_pool_lim is None:
+                moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
+            elif moving_avg_reward > moving_avg_reward_pool_lim[1]:
+                moving_avg_reward_pool_lim[1] = moving_avg_reward
+            elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
+                moving_avg_reward_pool_lim[0] = moving_avg_reward
+            ax.set(xlim=(-5, episode + 5),
+                   ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
+            # add data, then plot
+            episode_pool.append(episode)
+            moving_avg_reward_pool.append(moving_avg_reward)
+            line.set_data(episode_pool, moving_avg_reward_pool)
+            # give it time to plot the data
+            plt.pause(0.2)
+
+    # this make sure the plot won't quit automatically after finish plotting
+    plt.show(block=True)
 
     torch.save(actor_critic.state_dict(), './data/a2c_model.pth')
 
