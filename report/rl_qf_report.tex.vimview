@@ -1,0 +1,42 @@
+let s:so_save = &g:so | let s:siso_save = &g:siso | setg so=0 siso=0 | setl so=-1 siso=-1
+argglobal
+if bufexists(fnamemodify("~/PycharmProjects/rl/report/rl_qf_report.tex", ":p")) | buffer ~/PycharmProjects/rl/report/rl_qf_report.tex | else | edit ~/PycharmProjects/rl/report/rl_qf_report.tex | endif
+setlocal fdm=manual
+setlocal fde=0
+setlocal fmr={{{,}}}
+setlocal fdi=#
+setlocal fdl=0
+setlocal fml=1
+setlocal fdn=20
+setlocal fen
+silent! normal! zE
+1,19fold
+24,36fold
+37,71fold
+72,82fold
+83,94fold
+95,104fold
+105,118fold
+119,127fold
+128,154fold
+155,184fold
+185,214fold
+215,282fold
+283,294fold
+295,316fold
+317,338fold
+339,367fold
+368,376fold
+377,413fold
+414,478fold
+let &fdl = &fdl
+let s:l = 412 - ((411 * winheight(0) + 30) / 60)
+if s:l < 1 | let s:l = 1 | endif
+keepjumps exe s:l
+normal! zt
+keepjumps 412
+normal! 01|
+let &g:so = s:so_save | let &g:siso = s:siso_save
+nohlsearch
+doautoall SessionLoadPost
+" vim: set ft=vim :
