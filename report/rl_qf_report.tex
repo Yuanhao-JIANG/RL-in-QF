@@ -101,6 +101,7 @@ a sequence of monotonically improving policies and value functions:
 where \(\overset{E}{\longrightarrow}\) denotes a policy evaluation and
 \(\overset{I}{\longrightarrow}\) denotes a policy improvement. This way of 
 finding an optimal policy is called policy iteration.
+
 \subsection{Value Iteration}
 One drawback to policy iteration is that each of its iterations involves policy
 evaluation, which itself is a protracted iterative computation requiring 
@@ -381,18 +382,18 @@ with the ReLU function as the activation function. And the input of both
 function is the state, as illustrated below:
 \[S_t\rightarrow\underset{\text{ANN for value function}}{
         \boxed{
-            \underset{len(S)\rightarrow 128}{\text{Linear}}
+            \underset{n(S)\rightarrow 64}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 256}{\text{Linear}}
+            \rightarrow\underset{64\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{256\rightarrow 128}{\text{Linear}}
+            \rightarrow\underset{128\rightarrow 64}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 1}{\text{Linear}}
+            \rightarrow\underset{64\rightarrow 1}{\text{Linear}}
         }
 }\rightarrow v_t\]
 \[S_t\rightarrow\underset{\text{ANN for policy function}}{
         \boxed{
-            \underset{len(S)\rightarrow 128}{\text{Linear}}
+            \underset{n(S)\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
             \rightarrow\underset{128\rightarrow 256}{\text{Linear}}
             \rightarrow\text{ReLU}
@@ -400,8 +401,15 @@ function is the state, as illustrated below:
             \rightarrow\text{ReLU}
             \rightarrow\underset{128\rightarrow n(A)}{\text{Linear}}
         }
-}\rightarrow \text{Softmax}\rightarrow c_t\]
-where \(len(S)\) denotes the vector length of the state and \(n(A)\) denotes the number of actions.
+}\rightarrow \text{Log} \rightarrow \text{Softmax}\rightarrow c_t\]
+where \(n(S)\) denotes the vector length of the state and \(n(A)\) denotes 
+the number of actions. 
+\vspace{3mm}\newline Note that we add a log layer before the Softmax layer 
+when getting the price, which takes the log of all entries of the input vector.
+This shrinks the difference between those entries, so that the output of 
+Softmax layer would be flatter, which means we will have a flatter policy 
+distribution, which is beneficial for training since it increase the 
+exploration for different actions.
 
 \section{RL with Actor-Critic}
 In this project, we consider the episodic learning procedure, where each 
