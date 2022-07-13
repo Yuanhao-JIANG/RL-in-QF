@@ -1,57 +1,10 @@
 import torch
 import sys
-import numpy as np
-import torch.nn as nn
 import torch.optim as optim
-from torch.autograd import Variable
 import statsmodels.api as sm
 import env
 import matplotlib.pyplot as plt
-
-
-class LogLayer(nn.Module):
-    def __init__(self):
-        super(LogLayer, self).__init__()
-
-    def forward(self, t):
-        return torch.log(t+torch.abs(torch.min(t)).detach()+1)
-
-
-# a2c network
-class ActorCritic(nn.Module):
-    def __init__(self, num_state_features, num_actions):
-        super(ActorCritic, self).__init__()
-        self.num_actions = num_actions
-
-        # value
-        self.critic_net = nn.Sequential(
-            nn.Linear(num_state_features, 64),
-            nn.ReLU(),
-            nn.Linear(64, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-        )
-
-        # policy
-        self.actor_net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 256),
-            nn.ReLU(),
-            nn.Linear(256, 128),
-            nn.ReLU(),
-            nn.Linear(128, num_actions),
-            LogLayer(),     # to make numbers not differ too much
-            nn.Softmax(dim=0)
-        )
-
-    def forward(self, state):
-        state = Variable(state.float())
-
-        value = self.critic_net(state)
-        policy_distro = self.actor_net(state)
-
-        return value, policy_distro
+from model_utils import ActorCritic
 
 
 # train method
@@ -67,7 +20,7 @@ def a2c(environment):
     price_low = 400
     price_high = 2700
     price_step = 20
-    num_actions = int((price_high - price_low)/price_step)
+    num_actions = int((price_high - price_low) / price_step)
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
@@ -85,7 +38,7 @@ def a2c(environment):
     ax.set_title("moving average reward with a2c")
     ax.set_xlabel('episode')
     ax.set_ylabel('moving average reward')
-    (line, ) = ax.plot([], [])
+    (line,) = ax.plot([], [])
     moving_avg_reward_pool = []
     episode_pool = []
     moving_avg_reward_pool_lim = None
@@ -120,7 +73,7 @@ def a2c(environment):
 
             I = I * gamma
             state = new_state
-            moving_avg_reward += (reward - moving_avg_reward)/(episode * num_steps + step + 1)
+            moving_avg_reward += (reward - moving_avg_reward) / (episode * num_steps + step + 1)
 
         if episode % 5 == 0:
             sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
@@ -138,7 +91,7 @@ def a2c(environment):
             episode_pool.append(episode)
             moving_avg_reward_pool.append(moving_avg_reward)
             line.set_data(episode_pool, moving_avg_reward_pool)
-            # give it time to plot the data
+            # reserve time to plot the data
             plt.pause(0.2)
 
     # this make sure the plot won't quit automatically after finish plotting
