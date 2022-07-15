@@ -209,6 +209,11 @@ with the same derivation we have
         \Bigl(q_\pi(S_t,A_t)-b(S_t)\Big)
         \frac{\nabla\pi\left(A_t\middle|S_t, \bm{\theta}\right)}
 {\pi\left(A_t\middle|S_t, \bm{\theta}\right)}\right]\]
+And the discounted version of above is:
+\[\nabla J(\bm{\theta})\propto\mathbb{E}_\pi\left[
+        \gamma^{t}\Bigl(q_\pi(S_t,A_t)-b(S_t)\Big)
+        \frac{\nabla\pi\left(A_t\middle|S_t, \bm{\theta}\right)}
+{\pi\left(A_t\middle|S_t, \bm{\theta}\right)}\right]\]
 One natural choice for baseline is an estimate of the state value, 
 \(\hat{v}(S_t, \bm{w})\), where \(\bm{w}\) is the weight vector to be learned.
 
@@ -429,16 +434,15 @@ have built in previous sections, to solve the problem:
     \State Reset the environment
     \State Generate an \(x\) (first customer of the episode)
     \State Initialize \(S\) (first state of the episode)
-    \State \(I \gets 1\)
-    \Loop \hspace{0.3mm} (for each time step, \(N\) in total)
+    \Loop \hspace{0.3mm} (for each time step \(i\), \(N\) in total)
         \State \(c\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(c\), observe \(S'\), \(R\) from environment
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
         \State \(\bm{w} \gets \bm{w} + 
         \alpha_{\bm{w}} \delta\nabla\hat{v}(S,\bm{w})\)
-        \State \(\bm{\theta} \gets \bm{\theta} + \alpha_{\bm{\theta}}I\delta
+        \State \(\bm{\theta} \gets \bm{\theta} 
+        + \alpha_{\bm{\theta}}\gamma^{i}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
-        \State \(I \gets \gamma I\)
         \State \(S \gets S'\)
     \EndLoop
 \EndLoop
