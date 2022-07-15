@@ -46,7 +46,6 @@ def a2c(environment):
 
     for episode in range(max_episodes):
         state = torch.from_numpy(environment.reset()).to(device)
-        I = 1
 
         for step in range(num_steps):
             value, policy_distro = actor_critic.forward(state)
@@ -64,14 +63,13 @@ def a2c(environment):
 
             advantage = (reward + gamma * value_next - value).detach()
             critic_loss = - advantage * value
-            actor_loss = - I * advantage * log_prob
+            actor_loss = - (gamma ** num_steps) * advantage * log_prob
             ac_loss = actor_loss + critic_loss
 
             ac_optimizer.zero_grad()
             ac_loss.backward()
             ac_optimizer.step()
 
-            I = I * gamma
             state = new_state
             moving_avg_reward += (reward - moving_avg_reward) / (episode * num_steps + step + 1)
 
