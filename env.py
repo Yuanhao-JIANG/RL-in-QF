@@ -14,6 +14,8 @@ class Env:
         cols = ['gender', 'age', 'car_cost', 'miles', 'brand']
         for i in range(10):
             cols.append(f'rand_feature_{i}')
+        cols.append('level')
+
         cols.append('price')
         cols.append('response')
         cols.append('profit')

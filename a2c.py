@@ -16,7 +16,7 @@ def a2c(environment):
     gamma = 0.99
     num_steps = 300
     max_episodes = 3000
-    num_state_features = 18
+    num_state_features = 21
     price_low = 400
     price_high = 2700
     price_step = 20
@@ -45,7 +45,10 @@ def a2c(environment):
     ax.set(xlim=(0, 1))
 
     for episode in range(max_episodes):
-        state = torch.from_numpy(environment.reset()).to(device)
+        state = torch.from_numpy(environment.reset())
+        state = torch.cat(
+            (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+        ).to(device)
 
         for step in range(num_steps):
             value, policy_distro = actor_critic.forward(state)
@@ -57,7 +60,11 @@ def a2c(environment):
 
             # compute reward, go to next state to compute v'
             reward, new_state = environment.step(c.numpy())
-            new_state = torch.from_numpy(new_state).to(device)
+            new_state = torch.from_numpy(new_state)
+            new_state = torch.cat(
+                (new_state[:-1],
+                 torch.tensor([new_state[-1] == 0, new_state[-1] == 1, new_state[-1] == 2], dtype=torch.float))
+            ).to(device)
             value_next, _ = actor_critic.forward(new_state)
             value_next = value_next.to(device)[0]
 
