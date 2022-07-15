@@ -1,6 +1,6 @@
 import pandas as pd
 import numpy as np
-import generate_data
+import data_utils
 
 
 class Env:
@@ -23,7 +23,7 @@ class Env:
         self.cols = cols
 
     def get_new(self):
-        self.current_customer = generate_data.generate_customer()
+        self.current_customer = data_utils.generate_customer()
         # groups:
         # car_cost\age    <40,    >=40
         # <70000          0       2
