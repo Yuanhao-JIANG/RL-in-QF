@@ -258,7 +258,7 @@ take one sample estimate, which gives us the update formula for \(\bm{w}\):
     &=\bm{w}_t - \alpha_{\bm{w}}\delta_t\nabla \hat{v}(S_t, \bm{w}_t)
 \end{align*}
 The actor-critic method is based on the above updates formulas:
-\begin{algorithm}
+\begin{algorithm}[H]
 \caption{Actor-Critic}
 \begin{algorithmic}[1]
 \State Input: a differentiable policy parameterization 
@@ -269,16 +269,15 @@ The actor-critic method is based on the above updates formulas:
 \State \(\bm{\theta} \gets \bm{0}\), \(\bm{w} \gets \bm{0}\)
 \Loop \hspace{0.3mm} (for each episode)
     \State Initialize \(S\) (first state of the episode)
-    \State \(I \gets 1\)
-    \Loop \hspace{0.3mm} (for each time step)
+    \Loop \hspace{0.3mm} (for each time step \(i\))
         \State \(A\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(A\), observe \(S'\), \(R\)
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
         \State \(\bm{w} \gets \bm{w} + 
         \alpha_{\bm{w}} \delta\nabla\hat{v}(S,\bm{w})\)
-        \State \(\bm{\theta} \gets \bm{\theta} + \alpha_{\bm{\theta}}I\delta
+        \State \(\bm{\theta} \gets \bm{\theta} 
+        + \alpha_{\bm{\theta}}\gamma^{i}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
-        \State \(I \gets \gamma I\)
         \State \(S \gets S'\)
     \EndLoop
 \EndLoop
@@ -299,7 +298,7 @@ profit on this customer and the portfolio up to now.
 
 \subsection{Customer Features}
 A customer' features is represented by an array (or vector), denoted by \(x\) 
-with 15 entries with each generated randomly from a distribution, 
+with 16 entries with each generated randomly from a distribution, 
 including normal distribution, binomial distribution, and so on. For example, 
 a feature vector \(x\) is described as below:
 \begin{table}[htpb]
@@ -329,11 +328,11 @@ a price, then followed by a resopnse e.g.
 \begin{table}[htpb]
     \centering
     \begin{tabular}{c|c|c|c|c|c}
-        & customer feature 0 & \dots & customer feature 14 & price & resopnse\\
+        & customer feature 0 & \dots & customer feature 15 & price & resopnse\\
         \hline
-        1 & 1.0 & \dots & 3.278 & 1109.504 & 1.0\\
+        1 & 1.0 & \dots & 2.0 & 1109.504 & 1.0\\
         \hline
-        2 & 0.0 & \dots & 1.991 & 665.8 & 0.0\\
+        2 & 0.0 & \dots & 1.0 & 665.8 & 0.0\\
         \hline
         \dots & \dots & \dots & \dots & \dots & \dots
     \end{tabular}
@@ -343,8 +342,8 @@ a price, then followed by a resopnse e.g.
 
 \subsection{State}
 The state at start of each time step is the feature vector of the new customer 
-to promote, appended by the portfolio, which is also a data vector consists of
-the following entries:
+to promote (might be modified a bit), appended by the portfolio, which is also 
+a data vector consists of the following entries:
 \begin{itemize}
     \item average profit over all customers so far, expect for the new customer
         at current time step, denoted by avg\_pf (initialized to \(0\)), 
