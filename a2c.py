@@ -1,4 +1,5 @@
 import torch
+from torch.distributions import Categorical
 import sys
 import torch.optim as optim
 import statsmodels.api as sm
@@ -52,25 +53,24 @@ def a2c(environment):
 
         for step in range(num_steps):
             value, policy_distro = actor_critic.forward(state)
-            value, policy_distro = value.to(device)[0], policy_distro.to(device)
 
-            action = torch.multinomial(policy_distro.cpu(), 1, replacement=True)[0]
-            c = action * price_step + price_low
-            log_prob = torch.log(policy_distro[action])
+            distro = Categorical(policy_distro)
+            action = distro.sample()
+            c = action.item() * price_step + price_low
+            log_prob = distro.log_prob(action)
 
             # compute reward, go to next state to compute v'
-            reward, new_state = environment.step(c.numpy())
+            reward, new_state = environment.step(c)
             new_state = torch.from_numpy(new_state)
             new_state = torch.cat(
                 (new_state[:-1],
                  torch.tensor([new_state[-1] == 0, new_state[-1] == 1, new_state[-1] == 2], dtype=torch.float))
             ).to(device)
             value_next, _ = actor_critic.forward(new_state)
-            value_next = value_next.to(device)[0]
 
-            advantage = (reward + gamma * value_next - value).detach()
-            critic_loss = - advantage * value
-            actor_loss = - (gamma ** num_steps) * advantage * log_prob
+            advantage = (reward + gamma * value_next[0] - value[0]).detach()
+            critic_loss = - advantage * value[0]
+            actor_loss = - (gamma ** step) * advantage * log_prob
             ac_loss = actor_loss + critic_loss
 
             ac_optimizer.zero_grad()
