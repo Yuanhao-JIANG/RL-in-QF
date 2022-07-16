@@ -13,9 +13,9 @@ def reinforce(environment):
     # np.random.seed(123)
     # torch.manual_seed(211)
 
-    learning_rate = 1e-3
+    learning_rate = 3e-3
     gamma = 0.99
-    num_steps = 300
+    num_steps = 200
     max_episodes = 3000
     num_state_features = 21
     price_low = 400
@@ -72,27 +72,25 @@ def reinforce(environment):
             ).to(device)
 
             state = new_state
-
             moving_avg_reward += (reward - moving_avg_reward) / (episode * num_steps + step + 1)
 
         # compute the return and loss
-        loss = []
+        losses = []
         returns = reward_seq.copy()
         for step in reversed(range(num_steps)):
             if step != num_steps - 1:
                 returns[step] += gamma * returns[step + 1]
-            loss.append(- (gamma ** step) * returns[step] * log_prob_seq[step])
+            losses.append(-(gamma ** step) * returns[step] * log_prob_seq[step])
 
         # update policy model parameters
-        for step in range(num_steps):
-            optimizer.zero_grad()
-            loss[step].backward()
-            optimizer.step()
-
-        # loss = torch.cat(loss).sum()
-        # optimizer.zero_grad()
-        # loss.backward()
-        # optimizer.step()
+        # for step in range(num_steps):
+        #     optimizer.zero_grad()
+        #     losses[step].backward()
+        #     optimizer.step()
+        loss = torch.cat(losses).sum()
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
 
         if episode % 5 == 0:
             sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
