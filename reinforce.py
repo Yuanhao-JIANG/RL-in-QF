@@ -13,7 +13,7 @@ def reinforce(environment):
     # np.random.seed(123)
     # torch.manual_seed(211)
 
-    learning_rate = 3e-3
+    learning_rate = 3e-2
     gamma = 0.99
     num_steps = 200
     max_episodes = 3000
