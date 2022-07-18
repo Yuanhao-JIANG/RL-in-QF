@@ -75,3 +75,12 @@ class Reinforce(nn.Module):
         policy_distro = self.net(state)
 
         return policy_distro
+
+
+class PPO(nn.Module):
+    def __init__(self, num_state_features, num_actions):
+        super(PPO, self).__init__()
+        self.net = None
+
+    def forward(self, state):
+        pass
