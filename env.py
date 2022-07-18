@@ -48,11 +48,11 @@ class Env:
 
     def step(self, c):
         # promote price to customer
-        self.current_customer_df['price'] = c
+        self.current_customer_df['price'] = float(c)
 
         # glm generated response -> 1: buyer, 0: won't buy, and add this response to this customer's record
         pred = self.glm.predict(self.current_customer_df).gt(0.5).astype(int)[0]
-        self.current_customer_df['response'] = pred
+        self.current_customer_df['response'] = float(pred)
 
         # compute customer profit
         pf = pred * (c - self.g())
@@ -75,11 +75,11 @@ class Env:
     # compute expected reward and expected next state, but not step to it
     def peek_expected(self, c):
         # promote price to customer
-        self.current_customer_df['price'] = c
+        self.current_customer_df['price'] = float(c)
 
         # glm generated response -> 1: buyer, 0: won't buy, and add this response to this customer's record
         pred = self.glm.predict(self.current_customer_df).gt(0.5).astype(int)[0]
-        self.current_customer_df['response'] = pred
+        self.current_customer_df['response'] = float(pred)
 
         # compute customer profit
         pf = pred * (c - self.g())
