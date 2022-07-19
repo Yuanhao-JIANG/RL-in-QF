@@ -55,10 +55,10 @@ def ppo(environment, hp):
             loss = actor_loss + critic_loss
 
             ppo_optimizer.zero_grad()
-            loss.backward(retain_graph=True)
+            loss.backward()
             ppo_optimizer.step()
 
-        episode = (i + 1) * 5
+        episode = (i + 1) * hp.batch_num
         sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
         # update plot settings
         if moving_avg_reward_pool_lim is None:
@@ -139,16 +139,16 @@ def compute_returns(batch_rewards, gamma):
 
 
 hyperparameter = Namespace(
-    lr=3e-2,
+    lr=3e-3,
     gamma=0.99,
     num_episode=3000,
     batch_num=5,
-    episode_size=200,
+    episode_size=300,
+    num_update_per_itr=5,
     num_state_features=21,
     price_low=400,
     price_high=2700,
     price_step=20,
-    num_update_per_itr=5,
     clip=0.2,
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/a2c_model.pth'
