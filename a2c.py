@@ -10,6 +10,7 @@ from model_utils import ActorCritic
 
 # train method
 def a2c(environment):
+    # import numpy as np
     # np.random.seed(123)
     # torch.manual_seed(211)
 
