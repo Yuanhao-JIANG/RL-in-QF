@@ -1,5 +1,8 @@
 import torch
 import torch.optim as optim
+import torch.nn as nn
+import sys
+import matplotlib.pyplot as plt
 import statsmodels.api as sm
 from torch.distributions import Categorical
 from argparse import Namespace
@@ -20,12 +23,64 @@ def ppo(environment, hp):
 
     moving_avg_reward = 0
 
-    while True:
-        batch_states, batch_actions, batch_log_probs, batch_returns = rollout(environment, ppo_net, hp)
+    # plot settings:
+    plt.ion()
+    fig, ax = plt.subplots()
+    ax.set_title("moving average reward with ppo")
+    ax.set_xlabel('episode')
+    ax.set_ylabel('moving average reward')
+    (line,) = ax.plot([], [])
+    moving_avg_reward_pool = []
+    episode_pool = []
+    moving_avg_reward_pool_lim = None
+    ax.set(xlim=(0, 1))
+
+    for i in range(int(hp.num_episode/hp.batch_num)):
+        # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
+        batch_states, batch_actions, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
+        moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
+
+        for _ in range(hp.num_update_per_itr):
+            values, policy_distros = ppo_net(batch_states)
+            distros = Categorical(policy_distros)
+            actions = distros.sample()
+            curr_log_probs = distros.log_prob(actions)
+
+            ratios = torch.exp(curr_log_probs - batch_log_probs)
+            advantages = batch_returns - values.squeeze().detach()
+            actor_loss = - (torch.min(
+                ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages
+            )).mean()
+            critic_loss = nn.MSELoss()(values.squeeze(), batch_returns)
+            loss = actor_loss + critic_loss
+
+            ppo_optimizer.zero_grad()
+            loss.backward(retain_graph=True)
+            ppo_optimizer.step()
+
+        episode = (i + 1) * 5
+        sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
+        # update plot settings
+        if moving_avg_reward_pool_lim is None:
+            moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
+        elif moving_avg_reward > moving_avg_reward_pool_lim[1]:
+            moving_avg_reward_pool_lim[1] = moving_avg_reward
+        elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
+            moving_avg_reward_pool_lim[0] = moving_avg_reward
+        ax.set(xlim=(-5, episode + 5),
+               ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
+        # add data, then plot
+        episode_pool.append(episode)
+        moving_avg_reward_pool.append(moving_avg_reward)
+        line.set_data(episode_pool, moving_avg_reward_pool)
+        # reserve time to plot the data
+        plt.pause(0.2)
+
+    plt.show(block=True)
+    torch.save(ppo_net.state_dict(), hp.model_save_path)
 
 
 def rollout(environment, net, hp):
-    # Batch data. For more details, check function header.
     batch_states = []
     batch_actions = []
     batch_log_probs = []
@@ -63,12 +118,12 @@ def rollout(environment, net, hp):
 
         batch_rewards.append(ep_rewards)
 
-    batch_obs = torch.stack(batch_states)
-    batch_acts = torch.tensor(batch_actions, dtype=torch.float)
-    batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float)
-    batch_returns = compute_returns(batch_rewards, hp.gamma)
+    batch_states = torch.stack(batch_states)
+    batch_actions = torch.tensor(batch_actions, dtype=torch.float)
+    batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
+    batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
 
-    return batch_obs, batch_acts, batch_log_probs, batch_returns
+    return batch_states, batch_actions, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
 
 
 def compute_returns(batch_rewards, gamma):
@@ -86,13 +141,17 @@ def compute_returns(batch_rewards, gamma):
 hyperparameter = Namespace(
     lr=3e-2,
     gamma=0.99,
-    batch_num=10,
+    num_episode=3000,
+    batch_num=5,
     episode_size=200,
     num_state_features=21,
     price_low=400,
     price_high=2700,
     price_step=20,
-    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
+    num_update_per_itr=5,
+    clip=0.2,
+    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+    model_save_path='./data/a2c_model.pth'
 )
 glm = sm.load('./data/glm.model')
 env_train = env.Env(glm)
