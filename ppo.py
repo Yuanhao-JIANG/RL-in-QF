@@ -85,6 +85,7 @@ def rollout(environment, net, hp):
     batch_actions = []
     batch_log_probs = []
     batch_rewards = []
+    entropy = 0
 
     for _ in range(hp.batch_num):
         # rewards per episode
@@ -100,6 +101,7 @@ def rollout(environment, net, hp):
 
             # compute action and log_prob
             _, policy_distro = net.forward(state)
+            entropy += Categorical(probs=policy_distro).entropy()
             distro = Categorical(policy_distro)
             action = distro.sample().detach()
             c = action.item() * hp.price_step + hp.price_low
@@ -122,6 +124,7 @@ def rollout(environment, net, hp):
     batch_actions = torch.tensor(batch_actions, dtype=torch.float)
     batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
     batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
+    print(f"entropy = {entropy / (hp.batch_num*hp.episode_size)}")
 
     return batch_states, batch_actions, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
 
@@ -139,7 +142,7 @@ def compute_returns(batch_rewards, gamma):
 
 
 hyperparameter = Namespace(
-    lr=3e-3,
+    lr=3e-2,
     gamma=0.99,
     num_episode=3000,
     batch_num=5,
@@ -149,9 +152,9 @@ hyperparameter = Namespace(
     price_low=400,
     price_high=2700,
     price_step=20,
-    clip=0.2,
+    clip=0.5,
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    model_save_path='./data/a2c_model.pth'
+    model_save_path='./data/ppo_model.pth'
 )
 glm = sm.load('./data/glm.model')
 env_train = env.Env(glm)

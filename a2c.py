@@ -33,6 +33,7 @@ def a2c(environment):
     actor_critic.train()
 
     moving_avg_reward = 0
+    entropy = 0
 
     # plot settings:
     plt.ion()
@@ -54,6 +55,7 @@ def a2c(environment):
 
         for step in range(num_steps):
             value, policy_distro = actor_critic.forward(state)
+            entropy += Categorical(probs=policy_distro).entropy()
 
             distro = Categorical(policy_distro)
             action = distro.sample()
@@ -83,6 +85,8 @@ def a2c(environment):
 
         if episode % 5 == 0:
             sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
+            print(f'entropy = {entropy / (num_steps * 5)}')
+            entropy = 0
 
             # update plot settings
             if moving_avg_reward_pool_lim is None:
