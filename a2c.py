@@ -14,7 +14,7 @@ def a2c(environment):
     # np.random.seed(123)
     # torch.manual_seed(211)
 
-    learning_rate = 3e-5
+    learning_rate = 1e-3
     gamma = 0.99
     num_steps = 300
     max_episodes = 3000
@@ -25,7 +25,7 @@ def a2c(environment):
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    actor_critic = ActorCritic(num_state_features)
+    actor_critic = ActorCritic(num_state_features, price_min, price_max)
     ac_optimizer = optim.Adam(actor_critic.parameters(), lr=learning_rate)
 
     actor_critic = actor_critic.to(device)
