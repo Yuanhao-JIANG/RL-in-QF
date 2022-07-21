@@ -5,7 +5,7 @@ import statsmodels.api as sm
 import env
 import matplotlib.pyplot as plt
 from model_utils import Reinforce
-from torch.distributions import Categorical
+from torch.distributions import MultivariateNormal
 
 
 # train method
@@ -13,19 +13,18 @@ def reinforce(environment):
     # np.random.seed(123)
     # torch.manual_seed(211)
 
-    learning_rate = 3e-5
+    learning_rate = 3e-4
     gamma = 0.99
     num_steps = 200
     max_episodes = 3000
     num_state_features = 21
     price_low = 400
     price_high = 2700
-    price_step = 20
-    num_actions = int((price_high - price_low) / price_step)
+    cov_mat = torch.diag(torch.full(size=(1,), fill_value=0.5))
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    net = Reinforce(num_state_features, num_actions)
+    net = Reinforce(num_state_features)
     optimizer = optim.Adam(net.parameters(), lr=learning_rate)
 
     net = net.to(device)
@@ -54,16 +53,16 @@ def reinforce(environment):
         reward_seq = []
 
         # generate trajectory
+        p_mean, a_mean = 0, 0
         for step in range(num_steps):
-            policy_distro = net.forward(state)
+            policy_mean = net.forward(state)
 
-            distro = Categorical(policy_distro)
+            distro = MultivariateNormal(policy_mean, cov_mat.to(device))
             action = distro.sample()
-            c = action.item() * price_step + price_low
             log_prob_seq.append(torch.stack([distro.log_prob(action)]))
 
             # compute reward, go to next state
-            reward, new_state = environment.step(c)
+            reward, new_state = environment.step(action.item())
             reward_seq.append(reward)
             new_state = torch.from_numpy(new_state)
             new_state = torch.cat(
@@ -73,6 +72,8 @@ def reinforce(environment):
 
             state = new_state
             moving_avg_reward += (reward - moving_avg_reward) / (episode * num_steps + step + 1)
+            p_mean += policy_mean.item()
+            a_mean += action.item()
 
         # compute the return and loss
         losses = []
@@ -82,11 +83,6 @@ def reinforce(environment):
                 returns[step] += gamma * returns[step + 1]
             losses.append(-(gamma ** step) * returns[step] * log_prob_seq[step])
 
-        # update policy model parameters
-        # for step in range(num_steps):
-        #     optimizer.zero_grad()
-        #     losses[step].backward()
-        #     optimizer.step()
         loss = torch.cat(losses).sum()
         optimizer.zero_grad()
         loss.backward()
@@ -94,6 +90,7 @@ def reinforce(environment):
 
         if episode % 5 == 0:
             sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
+            sys.stdout.write("mean: {}, action: {}\n".format(p_mean/num_steps, a_mean/num_steps))
 
             # update plot settings
             if moving_avg_reward_pool_lim is None:
