@@ -15,7 +15,7 @@ class LogLayer(nn.Module):
 
 # a2c network
 class ActorCritic(nn.Module):
-    def __init__(self, num_state_features, num_actions):
+    def __init__(self, num_state_features):
         super(ActorCritic, self).__init__()
 
         # value
@@ -37,23 +37,20 @@ class ActorCritic(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, num_actions),
-            # take log to make numbers not differ too much with each other
-            LogLayer(1),
-            nn.Softmax(dim=0)
+            nn.Linear(128, 1),
         )
 
     def forward(self, state):
         state = Variable(state.float())
 
         value = self.critic_net(state)
-        policy_distro = self.actor_net(state)
+        policy_mean = self.actor_net(state)
 
-        return value, policy_distro
+        return value, policy_mean
 
 
 class Reinforce(nn.Module):
-    def __init__(self, num_state_features, num_actions):
+    def __init__(self, num_state_features):
         super(Reinforce, self).__init__()
 
         self.net = nn.Sequential(
@@ -63,20 +60,47 @@ class Reinforce(nn.Module):
             nn.ReLU(),
             nn.Linear(256, 128),
             nn.ReLU(),
-            nn.Linear(128, num_actions),
-            # take log to make numbers not differ too much with each other
-            LogLayer(1),
-            nn.Softmax(dim=0)
+            nn.Linear(128, 1)
         )
 
     def forward(self, state):
         state = Variable(state.float())
 
-        policy_distro = self.net(state)
+        policy_mean = self.net(state)
 
-        return policy_distro
+        return policy_mean
 
 
-class PPO(ActorCritic):
-    def __init__(self, num_state_features, num_actions):
-        super(PPO, self).__init__(num_state_features, num_actions)
+class PPO(nn.Module):
+    def __init__(self, num_state_features):
+        super(PPO, self).__init__()
+
+        # value
+        self.critic_net = nn.Sequential(
+            nn.Linear(num_state_features, 64),
+            nn.ReLU(),
+            nn.Linear(64, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
+
+        # policy
+        self.actor_net = nn.Sequential(
+            nn.Linear(num_state_features, 128),
+            nn.ReLU(),
+            nn.Linear(128, 256),
+            nn.ReLU(),
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 1)
+        )
+
+    def forward(self, state):
+        state = Variable(state.float())
+
+        value = self.critic_net(state)
+        policy_mean = self.actor_net(state)
+
+        return value, policy_mean

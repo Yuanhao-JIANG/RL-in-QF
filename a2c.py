@@ -1,5 +1,5 @@
 import torch
-from torch.distributions import Categorical
+from torch.distributions import MultivariateNormal
 import sys
 import torch.optim as optim
 import statsmodels.api as sm
@@ -14,26 +14,24 @@ def a2c(environment):
     # np.random.seed(123)
     # torch.manual_seed(211)
 
-    learning_rate = 3e-2
+    learning_rate = 3e-5
     gamma = 0.99
     num_steps = 300
     max_episodes = 3000
     num_state_features = 21
-    price_low = 400
-    price_high = 2700
-    price_step = 20
-    num_actions = int((price_high - price_low) / price_step)
+    price_min = 400
+    price_max = 2700
+    cov_mat = torch.diag(torch.full(size=(1,), fill_value=50.))
 
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
 
-    actor_critic = ActorCritic(num_state_features, num_actions)
+    actor_critic = ActorCritic(num_state_features)
     ac_optimizer = optim.Adam(actor_critic.parameters(), lr=learning_rate)
 
     actor_critic = actor_critic.to(device)
     actor_critic.train()
 
     moving_avg_reward = 0
-    entropy = 0
 
     # plot settings:
     plt.ion()
@@ -53,17 +51,16 @@ def a2c(environment):
             (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
         ).to(device)
 
+        p_mean, a_mean = 0, 0
         for step in range(num_steps):
-            value, policy_distro = actor_critic.forward(state)
-            entropy += Categorical(probs=policy_distro).entropy()
+            value, policy_mean = actor_critic.forward(state)
 
-            distro = Categorical(policy_distro)
+            distro = MultivariateNormal(policy_mean, cov_mat.to(device))
             action = distro.sample()
-            c = action.item() * price_step + price_low
             log_prob = distro.log_prob(action)
 
             # compute reward, go to next state to compute v'
-            reward, new_state = environment.step(c)
+            reward, new_state = environment.step(action.item())
             new_state = torch.from_numpy(new_state)
             new_state = torch.cat(
                 (new_state[:-1],
@@ -82,11 +79,12 @@ def a2c(environment):
 
             state = new_state
             moving_avg_reward += (reward - moving_avg_reward) / (episode * num_steps + step + 1)
+            p_mean += policy_mean.item()
+            a_mean += action.item()
 
         if episode % 5 == 0:
             sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
-            print(f'entropy = {entropy / (num_steps * 5)}')
-            entropy = 0
+            sys.stdout.write("mean: {}, action: {}\n".format(p_mean/num_steps, a_mean/num_steps))
 
             # update plot settings
             if moving_avg_reward_pool_lim is None:
