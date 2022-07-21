@@ -4,18 +4,18 @@ import torch.nn as nn
 import sys
 import matplotlib.pyplot as plt
 import statsmodels.api as sm
-from torch.distributions import Categorical
+from torch.distributions import MultivariateNormal
 from argparse import Namespace
 import env
 from model_utils import PPO
 
 
 def ppo(environment, hp):
-    # np.random.seed(123)
-    # torch.manual_seed(211)
+    import numpy as np
+    np.random.seed(123)
+    torch.manual_seed(211)
 
-    num_actions = int((hp.price_high - hp.price_low) / hp.price_step)
-    ppo_net = PPO(hp.num_state_features, num_actions)
+    ppo_net = PPO(hp.num_state_features)
     ppo_optimizer = optim.Adam(ppo_net.parameters(), lr=hp.lr)
 
     ppo_net = ppo_net.to(hp.device)
@@ -37,20 +37,21 @@ def ppo(environment, hp):
 
     for i in range(int(hp.num_episode/hp.batch_num)):
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
-        batch_states, batch_actions, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
+        batch_states, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
+        values, _ = ppo_net(batch_states)
+        advantages = batch_returns - values.squeeze().detach()
 
         for _ in range(hp.num_update_per_itr):
-            values, policy_distros = ppo_net(batch_states)
-            distros = Categorical(policy_distros)
+            values, policy_means = ppo_net.forward(batch_states)
+            distros = MultivariateNormal(policy_means, hp.cov_mat.to(hp.device))
             actions = distros.sample()
             curr_log_probs = distros.log_prob(actions)
 
             ratios = torch.exp(curr_log_probs - batch_log_probs)
-            advantages = batch_returns - values.squeeze().detach()
-            actor_loss = - (torch.min(
-                ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages
-            )).mean()
+            actor_loss = (
+                    - torch.min(ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages)
+                          ).mean()
             critic_loss = nn.MSELoss()(values.squeeze(), batch_returns)
             loss = actor_loss + critic_loss
 
@@ -60,6 +61,7 @@ def ppo(environment, hp):
 
         episode = (i + 1) * hp.batch_num
         sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
+        sys.stdout.write("mean: {}, action: {}\n".format(policy_means.mean().item(), actions[0].mean().item()))
         # update plot settings
         if moving_avg_reward_pool_lim is None:
             moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
@@ -82,10 +84,8 @@ def ppo(environment, hp):
 
 def rollout(environment, net, hp):
     batch_states = []
-    batch_actions = []
     batch_log_probs = []
     batch_rewards = []
-    entropy = 0
 
     for _ in range(hp.batch_num):
         # rewards per episode
@@ -100,33 +100,28 @@ def rollout(environment, net, hp):
             batch_states.append(state)
 
             # compute action and log_prob
-            _, policy_distro = net.forward(state)
-            entropy += Categorical(probs=policy_distro).entropy()
-            distro = Categorical(policy_distro)
+            _, policy_mean = net.forward(state)
+            distro = MultivariateNormal(policy_mean, hp.cov_mat.to(hp.device))
             action = distro.sample().detach()
-            c = action.item() * hp.price_step + hp.price_low
             log_prob = distro.log_prob(action).detach()
 
             # compute reward and go to next state
-            r, state = environment.step(c)
+            r, state = environment.step(action.item())
             state = torch.from_numpy(state)
             state = torch.cat(
                 (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
             ).to(hp.device)
 
             ep_rewards.append(r)
-            batch_actions.append(action)
             batch_log_probs.append(log_prob)
 
         batch_rewards.append(ep_rewards)
 
     batch_states = torch.stack(batch_states)
-    batch_actions = torch.tensor(batch_actions, dtype=torch.float)
     batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
     batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
-    print(f"entropy = {entropy / (hp.batch_num*hp.episode_size)}")
 
-    return batch_states, batch_actions, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
+    return batch_states, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
 
 
 def compute_returns(batch_rewards, gamma):
@@ -142,17 +137,17 @@ def compute_returns(batch_rewards, gamma):
 
 
 hyperparameter = Namespace(
-    lr=3e-2,
+    lr=3e-4,
     gamma=0.99,
     num_episode=3000,
     batch_num=5,
     episode_size=300,
     num_update_per_itr=5,
     num_state_features=21,
-    price_low=400,
-    price_high=2700,
-    price_step=20,
-    clip=0.5,
+    price_min=400,
+    price_max=2700,
+    clip=0.2,
+    cov_mat=torch.diag(torch.full(size=(1,), fill_value=50.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/ppo_model.pth'
 )
