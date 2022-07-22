@@ -15,6 +15,8 @@ def ppo(environment, hp):
     np.random.seed(123)
     torch.manual_seed(211)
 
+    cov_mat = hp.cov_mat.to(hp.device)
+
     ppo_net = PPO(hp.num_state_features, hp.price_min, hp.price_max)
     ppo_optimizer = optim.Adam(ppo_net.parameters(), lr=hp.lr)
 
@@ -27,7 +29,7 @@ def ppo(environment, hp):
     plt.ion()
     fig, ax = plt.subplots()
     ax.set_title("moving average reward with ppo")
-    ax.set_xlabel('episode')
+    ax.set_xlabel('iteration')
     ax.set_ylabel('moving average reward')
     (line,) = ax.plot([], [])
     moving_avg_reward_pool = []
@@ -35,7 +37,8 @@ def ppo(environment, hp):
     moving_avg_reward_pool_lim = None
     ax.set(xlim=(0, 1))
 
-    for i in range(int(hp.num_episode/hp.batch_num)):
+    for i in range(hp.num_itr):
+        itr = i + 1
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
         batch_states, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
@@ -44,7 +47,7 @@ def ppo(environment, hp):
 
         for _ in range(hp.num_update_per_itr):
             values, policy_means = ppo_net.forward(batch_states)
-            distros = MultivariateNormal(policy_means, hp.cov_mat.to(hp.device))
+            distros = MultivariateNormal(policy_means, cov_mat)
             actions = distros.sample()
             curr_log_probs = distros.log_prob(actions)
 
@@ -59,9 +62,8 @@ def ppo(environment, hp):
             loss.backward()
             ppo_optimizer.step()
 
-        episode = (i + 1) * hp.batch_num
-        sys.stdout.write("Episode: {}, moving average reward: {}\n".format(episode, moving_avg_reward))
-        sys.stdout.write("mean: {}, action: {}\n".format(policy_means.mean().item(), actions[0].mean().item()))
+        sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
+        sys.stdout.write("policy_mean: {}, action: {}\n".format(policy_means.mean().item(), actions.mean().item()))
         # update plot settings
         if moving_avg_reward_pool_lim is None:
             moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
@@ -69,10 +71,10 @@ def ppo(environment, hp):
             moving_avg_reward_pool_lim[1] = moving_avg_reward
         elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
             moving_avg_reward_pool_lim[0] = moving_avg_reward
-        ax.set(xlim=(-5, episode + 5),
+        ax.set(xlim=(-5, itr + 5),
                ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
         # add data, then plot
-        episode_pool.append(episode)
+        episode_pool.append(itr)
         moving_avg_reward_pool.append(moving_avg_reward)
         line.set_data(episode_pool, moving_avg_reward_pool)
         # reserve time to plot the data
@@ -86,6 +88,7 @@ def rollout(environment, net, hp):
     batch_states = []
     batch_log_probs = []
     batch_rewards = []
+    cov_mat = hp.cov_mat.to(hp.device)
 
     for _ in range(hp.batch_num):
         # rewards per episode
@@ -101,7 +104,7 @@ def rollout(environment, net, hp):
 
             # compute action and log_prob
             _, policy_mean = net.forward(state)
-            distro = MultivariateNormal(policy_mean, hp.cov_mat.to(hp.device))
+            distro = MultivariateNormal(policy_mean, cov_mat)
             action = distro.sample().detach()
             log_prob = distro.log_prob(action).detach()
 
@@ -139,7 +142,7 @@ def compute_returns(batch_rewards, gamma):
 hyperparameter = Namespace(
     lr=3e-4,
     gamma=0.99,
-    num_episode=3000,
+    num_itr=600,
     batch_num=5,
     episode_size=300,
     num_update_per_itr=5,
