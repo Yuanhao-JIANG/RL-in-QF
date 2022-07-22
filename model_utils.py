@@ -14,8 +14,7 @@ class Mul(nn.Module):
 
 def init_weights(m):
     if isinstance(m, nn.Linear):
-        # torch.nn.init.xavier_uniform_(m.weight)
-        m.weight.data.fill_(0.01)
+        torch.nn.init.xavier_uniform_(m.weight)
         m.bias.data.fill_(0.01)
 
 
@@ -39,13 +38,13 @@ class ActorCritic(nn.Module):
 
         # policy
         self.actor_net = nn.Sequential(
-            nn.Linear(num_state_features, 64),
+            nn.Linear(num_state_features, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(128, 1),
             Mul(1e-3),
             nn.Sigmoid()
         )
@@ -61,23 +60,28 @@ class ActorCritic(nn.Module):
 
 
 class Reinforce(nn.Module):
-    def __init__(self, num_state_features):
+    def __init__(self, num_state_features, price_min, price_max):
         super(Reinforce, self).__init__()
+        self.price_min = price_min
+        self.price_delta = price_max - price_min
 
         self.net = nn.Sequential(
             nn.Linear(num_state_features, 128),
             nn.ReLU(),
-            nn.Linear(128, 256),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(256, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 1)
+            nn.Linear(128, 1),
+            Mul(1e-3),
+            nn.Sigmoid()
         )
+        self.net.apply(init_weights)
 
     def forward(self, state):
         state = Variable(state.float())
 
-        policy_mean = self.net(state)
+        policy_mean = self.net(state) * self.price_delta + self.price_min
 
         return policy_mean
 
@@ -101,13 +105,13 @@ class PPO(nn.Module):
 
         # policy
         self.actor_net = nn.Sequential(
-            nn.Linear(num_state_features, 64),
+            nn.Linear(num_state_features, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 64),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(64, 1),
+            nn.Linear(128, 1),
             Mul(1e-3),
             nn.Sigmoid()
         )
