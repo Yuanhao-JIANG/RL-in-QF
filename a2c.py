@@ -10,11 +10,11 @@ from model_utils import ActorCritic
 
 # train method
 def a2c(environment):
-    # import numpy as np
-    # np.random.seed(123)
-    # torch.manual_seed(211)
+    import numpy as np
+    np.random.seed(123)
+    torch.manual_seed(211)
 
-    learning_rate = 1e-3
+    learning_rate = 3e-4
     gamma = 0.99
     num_steps = 300
     max_episodes = 3000
