@@ -15,7 +15,7 @@ def ppo(environment, hp):
     np.random.seed(123)
     torch.manual_seed(211)
 
-    ppo_net = PPO(hp.num_state_features)
+    ppo_net = PPO(hp.num_state_features, hp.price_min, hp.price_max)
     ppo_optimizer = optim.Adam(ppo_net.parameters(), lr=hp.lr)
 
     ppo_net = ppo_net.to(hp.device)
