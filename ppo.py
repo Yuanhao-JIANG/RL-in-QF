@@ -23,12 +23,7 @@ def ppo(environment, hp):
 
     ppo_net = ppo_net.to(hp.device)
 
-    # record model status before training
-    mean_reward, p_mean, a_mean = rollout_r_p_a(environment, ppo_net, hp)
-    moving_avg_reward = mean_reward
-    sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(0, moving_avg_reward))
-    sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean, a_mean))
-    p_mean, a_mean = 0, 0
+    moving_avg_reward = 0
 
     # plot settings:
     plt.ion()
@@ -37,13 +32,10 @@ def ppo(environment, hp):
     ax.set_xlabel('iteration')
     ax.set_ylabel('moving average reward')
     (line,) = ax.plot([], [])
-    moving_avg_reward_pool = [moving_avg_reward]
-    episode_pool = [0]
-    moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
-    ax.set(xlim=(-10, 10), ylim=(moving_avg_reward - 10, moving_avg_reward + 10))
-    line.set_data(episode_pool, moving_avg_reward_pool)
-    # reserve time to plot the data
-    plt.pause(0.2)
+    moving_avg_reward_pool = []
+    episode_pool = []
+    moving_avg_reward_min = float('inf')
+    moving_avg_reward_max = float('-inf')
 
     ppo_net.train()
     for i in range(hp.num_itr):
@@ -70,19 +62,15 @@ def ppo(environment, hp):
             loss.backward()
             ppo_optimizer.step()
 
-        itr = i + 1
-        sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
+        sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward))
         sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
 
         # update plot settings
-        if moving_avg_reward > moving_avg_reward_pool_lim[1]:
-            moving_avg_reward_pool_lim[1] = moving_avg_reward
-        elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
-            moving_avg_reward_pool_lim[0] = moving_avg_reward
-        ax.set(xlim=(-10, itr + 10),
-               ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
+        moving_avg_reward_min, moving_avg_reward_max = \
+            min(moving_avg_reward, moving_avg_reward_min), max(moving_avg_reward, moving_avg_reward_max)
+        ax.set(xlim=(-10, i + 10), ylim=(moving_avg_reward_min - 10, moving_avg_reward_max + 10))
         # add data, then plot
-        episode_pool.append(itr)
+        episode_pool.append(i)
         moving_avg_reward_pool.append(moving_avg_reward)
         line.set_data(episode_pool, moving_avg_reward_pool)
         # reserve time to plot the data
