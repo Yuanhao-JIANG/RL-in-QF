@@ -6,8 +6,7 @@ import env
 import matplotlib.pyplot as plt
 from argparse import Namespace
 from model_utils import Reinforce
-from torch.distributions import MultivariateNormal
-from data_utils import rollout_r_p_a
+from data_utils import rollout_r_p_a, rollout_with_gradient
 
 
 # train method
@@ -46,56 +45,25 @@ def reinforce(environment, hp):
 
     net.train()
     for i in range(hp.num_itr):
-        state = torch.from_numpy(environment.reset())
-        state = torch.cat(
-            (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
-        ).to(hp.device)
-        log_prob_seq = []
-        reward_seq = []
-
         # generate trajectory
-        for step in range(hp.episode_size):
-            policy_mean = net.forward(state)
-
-            distro = MultivariateNormal(policy_mean, cov_mat.to(hp.device))
-            action = distro.sample()
-            log_prob_seq.append(torch.stack([distro.log_prob(action)]))
-
-            # compute reward, go to next state
-            reward, new_state = environment.step(action.item())
-            reward_seq.append(reward)
-            new_state = torch.from_numpy(new_state)
-            new_state = torch.cat(
-                (new_state[:-1],
-                 torch.tensor([new_state[-1] == 0, new_state[-1] == 1, new_state[-1] == 2], dtype=torch.float))
-            ).to(hp.device)
-
-            state = new_state
-            moving_avg_reward += (reward - moving_avg_reward) / \
-                                 (hp.batch_num * hp.episode_size + i * hp.episode_size + step + 1)
-            p_mean += policy_mean.item()
-            a_mean += action.item()
+        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
+            rollout_with_gradient(environment, net, hp, policy_only=True)
+        moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
 
         # compute the return and loss
-        losses = []
-        returns = reward_seq.copy()
-        for step in reversed(range(hp.episode_size)):
-            if step != hp.episode_size - 1:
-                returns[step] += hp.gamma * returns[step + 1]
-            losses.append(-(hp.gamma ** step) * returns[step] * log_prob_seq[step])
+        losses = batch_returns * batch_log_probs
+        for j in range(len(losses)):
+            losses[j] *= - (hp.gamma ** j)
 
-        loss = torch.cat(losses).sum()
+        loss = losses.mean()
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
 
         itr = i + 1
-        if itr % hp.batch_num == 0:
+        if itr % 5 == 0:
             sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
-            sys.stdout.write("policy_mean: {}, action: {}\n".format(
-                p_mean / (hp.batch_num * hp.episode_size), a_mean / (hp.batch_num * hp.episode_size))
-            )
-            p_mean, a_mean = 0, 0
+            sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
 
             # update plot settings
             if moving_avg_reward > moving_avg_reward_pool_lim[1]:
@@ -120,7 +88,7 @@ hyperparameter = Namespace(
     lr=3e-4,
     gamma=0.99,
     num_itr=3000,
-    batch_num=5,
+    batch_num=1,
     episode_size=300,
     num_state_features=21,
     price_min=400,

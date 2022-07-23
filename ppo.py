@@ -48,7 +48,7 @@ def ppo(environment, hp):
     ppo_net.train()
     for i in range(hp.num_itr):
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
-        batch_states, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
+        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = rollout(environment, ppo_net, hp)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
         values, _ = ppo_net(batch_states)
         advantages = batch_returns - values.squeeze().detach()
@@ -70,13 +70,9 @@ def ppo(environment, hp):
             loss.backward()
             ppo_optimizer.step()
 
-            p_mean = policy_means.mean().item()
-            a_mean = actions.mean().item()
-
         itr = i + 1
         sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
-        sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean, a_mean))
-        p_mean, a_mean = 0, 0
+        sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
 
         # update plot settings
         if moving_avg_reward > moving_avg_reward_pool_lim[1]:
