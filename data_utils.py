@@ -3,6 +3,8 @@ import pandas as pd
 from scipy import stats
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+import torch
+from torch.distributions import MultivariateNormal
 
 
 feature_size = 16
@@ -170,6 +172,103 @@ def test_glm(glm_path='./data/glm.model', test_df_path='./data/dataframe_test.cs
     df_pred = pd.DataFrame(pred, columns=['pred'])
     df_pred['true'] = instance['response']
     print(df_pred)
+
+
+# rollout with only reward, policy_mean, action as return
+def rollout_r_p_a(environment, net, hp, policy_only=False):
+    r_mean = 0
+    p_mean = 0
+    a_mean = 0
+    cov_mat = hp.cov_mat.to(hp.device)
+    sample_num = hp.batch_num * hp.episode_size
+
+    with torch.no_grad():
+        for _ in range(hp.batch_num):
+            state = torch.from_numpy(environment.reset())
+            state = torch.cat(
+                (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+            ).to(hp.device)
+
+            # run an episode
+            for _ in range(hp.episode_size):
+                # compute action and log_prob
+                if policy_only:
+                    policy_mean = net.forward(state)
+                else:
+                    _, policy_mean = net.forward(state)
+                distro = MultivariateNormal(policy_mean, cov_mat)
+                action = distro.sample().detach()
+
+                # compute reward and go to next state
+                r, state = environment.step(action.item())
+                state = torch.from_numpy(state)
+                state = torch.cat(
+                    (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+                ).to(hp.device)
+
+                r_mean += r
+                p_mean += policy_mean.item()
+                a_mean += action.item()
+
+    return r_mean/sample_num, p_mean/sample_num, a_mean/sample_num
+
+
+def rollout(environment, net, hp, policy_only=False):
+    batch_states = []
+    batch_log_probs = []
+    batch_rewards = []
+    cov_mat = hp.cov_mat.to(hp.device)
+
+    for _ in range(hp.batch_num):
+        # rewards per episode
+        ep_rewards = []
+        state = torch.from_numpy(environment.reset())
+        state = torch.cat(
+            (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+        ).to(hp.device)
+
+        # run an episode
+        for _ in range(hp.episode_size):
+            batch_states.append(state)
+
+            # compute action and log_prob
+            if policy_only:
+                policy_mean = net.forward(state)
+            else:
+                _, policy_mean = net.forward(state)
+            distro = MultivariateNormal(policy_mean, cov_mat)
+            action = distro.sample().detach()
+            log_prob = distro.log_prob(action).detach()
+
+            # compute reward and go to next state
+            r, state = environment.step(action.item())
+            state = torch.from_numpy(state)
+            state = torch.cat(
+                (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+            ).to(hp.device)
+
+            ep_rewards.append(r)
+            batch_log_probs.append(log_prob)
+
+        batch_rewards.append(ep_rewards)
+
+    batch_states = torch.stack(batch_states)
+    batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
+    batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
+
+    return batch_states, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
+
+
+def compute_returns(batch_rewards, gamma):
+    batch_returns = []
+    # iterate through each episode
+    for ep_rewards in reversed(batch_rewards):
+        discounted_reward = 0
+        for r in reversed(ep_rewards):
+            discounted_reward = r + discounted_reward * gamma
+            batch_returns.insert(0, discounted_reward)
+
+    return torch.tensor(batch_returns, dtype=torch.float)
 
 
 # generate_dataframe(save=True, path='./data/dataframe_fit.csv', seed=0)
