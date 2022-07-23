@@ -39,8 +39,8 @@ def a2c(environment, hp):
     (line,) = ax.plot([], [])
     moving_avg_reward_pool = [moving_avg_reward]
     episode_pool = [0]
-    moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
-    ax.set(xlim=(-10, 10), ylim=(moving_avg_reward - 10, moving_avg_reward + 10))
+    moving_avg_reward_min, moving_avg_reward_max = moving_avg_reward, moving_avg_reward
+    ax.set(xlim=(-10, 10), ylim=(moving_avg_reward_min - 10, moving_avg_reward_max + 10))
     line.set_data(episode_pool, moving_avg_reward_pool)
     # reserve time to plot the data
     plt.pause(0.2)
@@ -91,12 +91,10 @@ def a2c(environment, hp):
             p_mean, a_mean = 0, 0
 
             # update plot settings
-            if moving_avg_reward > moving_avg_reward_pool_lim[1]:
-                moving_avg_reward_pool_lim[1] = moving_avg_reward
-            elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
-                moving_avg_reward_pool_lim[0] = moving_avg_reward
+            moving_avg_reward_min, moving_avg_reward_max = \
+                min(moving_avg_reward, moving_avg_reward_min), max(moving_avg_reward, moving_avg_reward_max)
             ax.set(xlim=(-10, itr + 10),
-                   ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
+                   ylim=(moving_avg_reward_min - 10, moving_avg_reward_max + 10))
             # add data, then plot
             episode_pool.append(itr)
             moving_avg_reward_pool.append(moving_avg_reward)
