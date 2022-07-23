@@ -7,13 +7,14 @@ import matplotlib.pyplot as plt
 from argparse import Namespace
 from model_utils import Reinforce
 from torch.distributions import MultivariateNormal
+from data_utils import rollout_r_p_a
 
 
 # train method
 def reinforce(environment, hp):
-    import numpy as np
-    np.random.seed(123)
-    torch.manual_seed(211)
+    # import numpy as np
+    # np.random.seed(123)
+    # torch.manual_seed(211)
 
     cov_mat = hp.cov_mat.to(hp.device)
 
@@ -21,9 +22,12 @@ def reinforce(environment, hp):
     optimizer = optim.Adam(net.parameters(), lr=hp.lr)
 
     net = net.to(hp.device)
-    net.train()
 
-    moving_avg_reward = 0
+    mean_reward, p_mean, a_mean = rollout_r_p_a(environment, net, hp, policy_only=True)
+    moving_avg_reward = mean_reward
+    sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(0, moving_avg_reward))
+    sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean, a_mean))
+    p_mean, a_mean = 0, 0
 
     # plot settings:
     plt.ion()
@@ -32,13 +36,16 @@ def reinforce(environment, hp):
     ax.set_xlabel('iteration')
     ax.set_ylabel('moving average reward')
     (line,) = ax.plot([], [])
-    moving_avg_reward_pool = []
-    episode_pool = []
-    moving_avg_reward_pool_lim = None
-    ax.set(xlim=(0, 1))
+    moving_avg_reward_pool = [moving_avg_reward]
+    episode_pool = [0]
+    moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
+    ax.set(xlim=(-10, 10), ylim=(moving_avg_reward - 10, moving_avg_reward + 10))
+    line.set_data(episode_pool, moving_avg_reward_pool)
+    # reserve time to plot the data
+    plt.pause(0.2)
 
+    net.train()
     for i in range(hp.num_itr):
-        itr = i + 1
         state = torch.from_numpy(environment.reset())
         state = torch.cat(
             (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
@@ -47,7 +54,6 @@ def reinforce(environment, hp):
         reward_seq = []
 
         # generate trajectory
-        p_mean, a_mean = 0, 0
         for step in range(hp.episode_size):
             policy_mean = net.forward(state)
 
@@ -65,7 +71,8 @@ def reinforce(environment, hp):
             ).to(hp.device)
 
             state = new_state
-            moving_avg_reward += (reward - moving_avg_reward) / (i * hp.episode_size + step + 1)
+            moving_avg_reward += (reward - moving_avg_reward) / \
+                                 (hp.batch_num * hp.episode_size + i * hp.episode_size + step + 1)
             p_mean += policy_mean.item()
             a_mean += action.item()
 
@@ -82,18 +89,20 @@ def reinforce(environment, hp):
         loss.backward()
         optimizer.step()
 
-        if itr % 5 == 0:
+        itr = i + 1
+        if itr % hp.batch_num == 0:
             sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
-            sys.stdout.write("mean: {}, action: {}\n".format(p_mean/hp.episode_size, a_mean/hp.episode_size))
+            sys.stdout.write("policy_mean: {}, action: {}\n".format(
+                p_mean / (hp.batch_num * hp.episode_size), a_mean / (hp.batch_num * hp.episode_size))
+            )
+            p_mean, a_mean = 0, 0
 
             # update plot settings
-            if moving_avg_reward_pool_lim is None:
-                moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
-            elif moving_avg_reward > moving_avg_reward_pool_lim[1]:
+            if moving_avg_reward > moving_avg_reward_pool_lim[1]:
                 moving_avg_reward_pool_lim[1] = moving_avg_reward
             elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
                 moving_avg_reward_pool_lim[0] = moving_avg_reward
-            ax.set(xlim=(-5, itr + 5),
+            ax.set(xlim=(-10, itr + 10),
                    ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
             # add data, then plot
             episode_pool.append(itr)
@@ -111,6 +120,7 @@ hyperparameter = Namespace(
     lr=3e-4,
     gamma=0.99,
     num_itr=3000,
+    batch_num=5,
     episode_size=300,
     num_state_features=21,
     price_min=400,

@@ -8,12 +8,13 @@ from torch.distributions import MultivariateNormal
 from argparse import Namespace
 import env
 from model_utils import PPO
+from data_utils import rollout_r_p_a, rollout
 
 
 def ppo(environment, hp):
-    import numpy as np
-    np.random.seed(123)
-    torch.manual_seed(211)
+    # import numpy as np
+    # np.random.seed(123)
+    # torch.manual_seed(211)
 
     cov_mat = hp.cov_mat.to(hp.device)
 
@@ -21,9 +22,13 @@ def ppo(environment, hp):
     ppo_optimizer = optim.Adam(ppo_net.parameters(), lr=hp.lr)
 
     ppo_net = ppo_net.to(hp.device)
-    ppo_net.train()
 
-    moving_avg_reward = 0
+    # record model status before training
+    mean_reward, p_mean, a_mean = rollout_r_p_a(environment, ppo_net, hp)
+    moving_avg_reward = mean_reward
+    sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(0, moving_avg_reward))
+    sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean, a_mean))
+    p_mean, a_mean = 0, 0
 
     # plot settings:
     plt.ion()
@@ -32,13 +37,16 @@ def ppo(environment, hp):
     ax.set_xlabel('iteration')
     ax.set_ylabel('moving average reward')
     (line,) = ax.plot([], [])
-    moving_avg_reward_pool = []
-    episode_pool = []
-    moving_avg_reward_pool_lim = None
-    ax.set(xlim=(0, 1))
+    moving_avg_reward_pool = [moving_avg_reward]
+    episode_pool = [0]
+    moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
+    ax.set(xlim=(-10, 10), ylim=(moving_avg_reward - 10, moving_avg_reward + 10))
+    line.set_data(episode_pool, moving_avg_reward_pool)
+    # reserve time to plot the data
+    plt.pause(0.2)
 
+    ppo_net.train()
     for i in range(hp.num_itr):
-        itr = i + 1
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
         batch_states, batch_log_probs, batch_returns, mean_reward = rollout(environment, ppo_net, hp)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
@@ -62,16 +70,20 @@ def ppo(environment, hp):
             loss.backward()
             ppo_optimizer.step()
 
+            p_mean = policy_means.mean().item()
+            a_mean = actions.mean().item()
+
+        itr = i + 1
         sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(itr, moving_avg_reward))
-        sys.stdout.write("policy_mean: {}, action: {}\n".format(policy_means.mean().item(), actions.mean().item()))
+        sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean, a_mean))
+        p_mean, a_mean = 0, 0
+
         # update plot settings
-        if moving_avg_reward_pool_lim is None:
-            moving_avg_reward_pool_lim = [moving_avg_reward, moving_avg_reward]
-        elif moving_avg_reward > moving_avg_reward_pool_lim[1]:
+        if moving_avg_reward > moving_avg_reward_pool_lim[1]:
             moving_avg_reward_pool_lim[1] = moving_avg_reward
         elif moving_avg_reward < moving_avg_reward_pool_lim[0]:
             moving_avg_reward_pool_lim[0] = moving_avg_reward
-        ax.set(xlim=(-5, itr + 5),
+        ax.set(xlim=(-10, itr + 10),
                ylim=(moving_avg_reward_pool_lim[0] - 10, moving_avg_reward_pool_lim[1] + 10))
         # add data, then plot
         episode_pool.append(itr)
@@ -82,61 +94,6 @@ def ppo(environment, hp):
 
     plt.show(block=True)
     torch.save(ppo_net.state_dict(), hp.model_save_path)
-
-
-def rollout(environment, net, hp):
-    batch_states = []
-    batch_log_probs = []
-    batch_rewards = []
-    cov_mat = hp.cov_mat.to(hp.device)
-
-    for _ in range(hp.batch_num):
-        # rewards per episode
-        ep_rewards = []
-        state = torch.from_numpy(environment.reset())
-        state = torch.cat(
-            (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
-        ).to(hp.device)
-
-        # run an episode
-        for _ in range(hp.episode_size):
-            batch_states.append(state)
-
-            # compute action and log_prob
-            _, policy_mean = net.forward(state)
-            distro = MultivariateNormal(policy_mean, cov_mat)
-            action = distro.sample().detach()
-            log_prob = distro.log_prob(action).detach()
-
-            # compute reward and go to next state
-            r, state = environment.step(action.item())
-            state = torch.from_numpy(state)
-            state = torch.cat(
-                (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
-            ).to(hp.device)
-
-            ep_rewards.append(r)
-            batch_log_probs.append(log_prob)
-
-        batch_rewards.append(ep_rewards)
-
-    batch_states = torch.stack(batch_states)
-    batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
-    batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
-
-    return batch_states, batch_log_probs, batch_returns, torch.tensor(batch_rewards).mean()
-
-
-def compute_returns(batch_rewards, gamma):
-    batch_returns = []
-    # iterate through each episode
-    for ep_rewards in reversed(batch_rewards):
-        discounted_reward = 0
-        for r in reversed(ep_rewards):
-            discounted_reward = r + discounted_reward * gamma
-            batch_returns.insert(0, discounted_reward)
-
-    return torch.tensor(batch_returns, dtype=torch.float)
 
 
 hyperparameter = Namespace(
