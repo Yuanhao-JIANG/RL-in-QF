@@ -12,10 +12,6 @@ from data_utils import rollout_r_p_a
 
 # train method
 def a2c(environment, hp):
-    # import numpy as np
-    # np.random.seed(123)
-    # torch.manual_seed(211)
-
     cov_mat = hp.cov_mat.to(hp.device)
 
     actor_critic = ActorCritic(hp.num_state_features, hp.price_min, hp.price_max)

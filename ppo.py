@@ -8,14 +8,10 @@ from torch.distributions import MultivariateNormal
 from argparse import Namespace
 import env
 from model_utils import PPO
-from data_utils import rollout_r_p_a, rollout
+from data_utils import rollout
 
 
 def ppo(environment, hp):
-    # import numpy as np
-    # np.random.seed(123)
-    # torch.manual_seed(211)
-
     cov_mat = hp.cov_mat.to(hp.device)
 
     ppo_net = PPO(hp.num_state_features, hp.price_min, hp.price_max)

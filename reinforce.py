@@ -6,15 +6,10 @@ import env
 import matplotlib.pyplot as plt
 from argparse import Namespace
 from model_utils import Reinforce
-from data_utils import rollout_r_p_a, rollout_with_gradient
+from data_utils import rollout_with_gradient
 
 
-# train method
 def reinforce(environment, hp):
-    # import numpy as np
-    # np.random.seed(123)
-    # torch.manual_seed(211)
-
     net = Reinforce(hp.num_state_features, hp.price_min, hp.price_max)
     optimizer = optim.Adam(net.parameters(), lr=hp.lr)
 
