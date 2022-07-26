@@ -26,9 +26,11 @@ def ppo(environment, hp):
     for i in range(hp.num_itr):
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
         batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = rollout(environment, ppo_net, hp)
+        batch_states = (batch_states - batch_states.mean()) / (batch_states.std() + 1e-10)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
         values, _ = ppo_net(batch_states)
         advantages = batch_returns - values.squeeze().detach()
+        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
 
         for _ in range(hp.num_update_per_itr):
             values, policy_means = ppo_net.forward(batch_states)
@@ -68,7 +70,7 @@ hyperparameter = Namespace(
     price_min=400,
     price_max=2700,
     clip=0.2,
-    cov_mat=torch.diag(torch.full(size=(1,), fill_value=50.)),
+    cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/ppo_model.pth',
     csv_out_path='./data/ppo_out.csv'
