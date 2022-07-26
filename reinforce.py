@@ -23,6 +23,7 @@ def reinforce(environment, hp):
         # generate trajectory
         batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
             rollout_with_gradient(environment, net, hp, policy_only=True)
+        batch_returns = (batch_returns - batch_returns.mean()) / (batch_returns.std() + 1e-10)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
 
         # compute the return and loss
@@ -55,7 +56,7 @@ hyperparameter = Namespace(
     num_state_features=21,
     price_min=400,
     price_max=2700,
-    cov_mat=torch.diag(torch.full(size=(1,), fill_value=50.)),
+    cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/reinforce_model.pth',
     csv_out_path='./data/reinforce_out.csv'
