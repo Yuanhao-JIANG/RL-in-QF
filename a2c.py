@@ -88,7 +88,7 @@ hyperparameter = Namespace(
     num_state_features=21,
     price_min=400,
     price_max=2700,
-    cov_mat=torch.diag(torch.full(size=(1,), fill_value=50.)),
+    cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/a2c_model.pth',
     csv_out_path='./data/a2c_out.csv'
