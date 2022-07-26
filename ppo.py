@@ -26,7 +26,6 @@ def ppo(environment, hp):
     for i in range(hp.num_itr):
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
         batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = rollout(environment, ppo_net, hp)
-        batch_states = (batch_states - batch_states.mean()) / (batch_states.std() + 1e-10)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
         values, _ = ppo_net(batch_states)
         advantages = batch_returns - values.squeeze().detach()
