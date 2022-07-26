@@ -27,20 +27,17 @@ class ActorCritic(nn.Module):
 
         # value
         self.critic_net = nn.Sequential(
-            nn.Linear(num_state_features, 64),
+            nn.Linear(num_state_features, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(128, 1)
         )
+        self.critic_net.apply(init_weights)
 
         # policy
         self.actor_net = nn.Sequential(
             nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
@@ -70,8 +67,6 @@ class Reinforce(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
             nn.Linear(128, 1),
             Mul(1e-3),
             nn.Sigmoid()
@@ -94,20 +89,17 @@ class PPO(nn.Module):
 
         # value
         self.critic_net = nn.Sequential(
-            nn.Linear(num_state_features, 64),
+            nn.Linear(num_state_features, 128),
             nn.ReLU(),
-            nn.Linear(64, 128),
+            nn.Linear(128, 128),
             nn.ReLU(),
-            nn.Linear(128, 64),
-            nn.ReLU(),
-            nn.Linear(64, 1)
+            nn.Linear(128, 1)
         )
+        self.critic_net.apply(init_weights)
 
         # policy
         self.actor_net = nn.Sequential(
             nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
