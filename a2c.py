@@ -1,5 +1,4 @@
 import torch
-from torch.distributions import MultivariateNormal
 import sys
 import torch.optim as optim
 import statsmodels.api as sm
