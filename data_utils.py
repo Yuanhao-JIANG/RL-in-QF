@@ -175,45 +175,6 @@ def test_glm(glm_path='./data/glm.model', test_df_path='./data/dataframe_test.cs
     print(df_pred)
 
 
-# rollout with only reward, policy_mean, action as return
-def rollout_r_p_a(environment, net, hp, policy_only=False):
-    r_mean = 0
-    p_mean = 0
-    a_mean = 0
-    cov_mat = hp.cov_mat.to(hp.device)
-    sample_num = hp.batch_num * hp.episode_size
-
-    with torch.no_grad():
-        for _ in range(hp.batch_num):
-            state = torch.from_numpy(environment.reset())
-            state = torch.cat(
-                (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
-            ).to(hp.device)
-
-            # run an episode
-            for _ in range(hp.episode_size):
-                # compute action and log_prob
-                if policy_only:
-                    policy_mean = net.forward(state)
-                else:
-                    _, policy_mean = net.forward(state)
-                distro = MultivariateNormal(policy_mean, cov_mat)
-                action = distro.sample()
-
-                # compute reward and go to next state
-                r, state = environment.step(action.item())
-                state = torch.from_numpy(state)
-                state = torch.cat(
-                    (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
-                ).to(hp.device)
-
-                r_mean += r
-                p_mean += policy_mean.item()
-                a_mean += action.item()
-
-    return r_mean / sample_num, p_mean / sample_num, a_mean / sample_num
-
-
 def rollout(environment, net, hp, policy_only=False):
     batch_states = []
     batch_log_probs = []
@@ -264,6 +225,66 @@ def rollout(environment, net, hp, policy_only=False):
     batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
 
     return batch_states, batch_log_probs, batch_returns, p_mean, a_mean, torch.tensor(batch_rewards).mean()
+
+
+# rollout for a2c
+def rollout_a2c(environment, net, hp):
+    batch_states = []
+    batch_log_probs = []
+    p_mean = []
+    a_mean = []
+    batch_rewards = []
+    values = torch.tensor([]).to(hp.device)
+    advantages = torch.tensor([]).to(hp.device)
+    cov_mat = hp.cov_mat.to(hp.device)
+
+    for _ in range(hp.batch_num):
+        ep_rewards = []
+        ep_values = torch.tensor([]).to(hp.device)
+        state = torch.from_numpy(environment.reset())
+        state = torch.cat(
+            (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+        ).to(hp.device)
+
+        # run an episode
+        for _ in range(hp.episode_size):
+            batch_states.append(state)
+
+            # compute action and log_prob
+            v, policy_mean = net.forward(state)
+            distro = MultivariateNormal(policy_mean, cov_mat)
+            action = distro.sample()
+            log_prob = distro.log_prob(action)
+
+            # compute reward and go to next state
+            r, state = environment.step(action.item())
+            state = torch.from_numpy(state)
+            state = torch.cat(
+                (state[:-1], torch.tensor([state[-1] == 0, state[-1] == 1, state[-1] == 2], dtype=torch.float))
+            ).to(hp.device)
+
+            ep_values = torch.cat((ep_values, v))
+            ep_rewards.append(r)
+            p_mean.append(policy_mean)
+            a_mean.append(action)
+            batch_log_probs.append(log_prob)
+
+        tgt, _ = net.forward(state)
+        ep_adv = torch.zeros(len(ep_rewards)).to(hp.device)
+        for t in reversed(range(len(ep_rewards))):
+            tgt = ep_rewards[t] + hp.gamma * tgt
+            adv = tgt - ep_values[t]
+            ep_adv[t] = ((hp.gamma ** t) * adv).detach()
+        values = torch.cat((values, ep_values))
+        advantages = torch.cat((advantages, ep_adv))
+        batch_rewards.append(ep_rewards)
+
+    batch_states = torch.stack(batch_states)
+    batch_log_probs = torch.stack(batch_log_probs)
+    p_mean = torch.tensor(p_mean, dtype=torch.float).mean()
+    a_mean = torch.tensor(a_mean, dtype=torch.float).mean()
+
+    return batch_states, batch_log_probs, advantages, values, p_mean, a_mean, torch.tensor(batch_rewards).mean()
 
 
 # rollout that requires gradient on policy log_prob
