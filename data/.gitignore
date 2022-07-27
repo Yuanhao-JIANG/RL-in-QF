@@ -1,4 +1,4 @@
 *
 !.gitignore
-!*_out.png
-!*_out.csv
+!*out.png
+!*out.csv
