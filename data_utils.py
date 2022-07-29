@@ -1,35 +1,43 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
+from scipy.special import softmax
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import torch
 from torch.distributions import MultivariateNormal
+import matplotlib.pyplot as plt
 
 feature_size = 16
 
 
-def generate_customer():
+def get_truncated_normal(mean, std, low, up, size):
+    return stats.truncnorm((low - mean) / std, (up - mean) / std, loc=mean, scale=std).rvs(size)
+
+
+# generate a customer as numpy array
+def generate_customer(seed=None):
+    if seed is not None:
+        np.random.seed(seed)
+
     customer = np.zeros(feature_size)
 
-    # some generic feature:
+    # customer features:
     # gender
     customer[0] = np.random.binomial(1, .5, 1)
 
     # age
-    age_mean, age_var = 28, 25
-    customer[1] = stats.truncnorm.rvs((18 - age_mean) / age_var, (80 - age_mean) / age_var,
-                                      loc=age_mean, scale=age_var, size=1)
+    customer[1] = get_truncated_normal(mean=25, std=20, low=18, up=90, size=1)
+
     # car cost
-    car_cost_mean, car_cost_var = 39000, 50000
-    customer[2] = stats.truncnorm.rvs((10000 - car_cost_mean) / car_cost_var, (400000 - car_cost_mean) / car_cost_var,
-                                      loc=car_cost_mean, scale=car_cost_var, size=1)
+    customer[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=1000)
+
     # miles
-    miles_mean, miles_var = 8000, 50000
-    customer[3] = stats.truncnorm.rvs((200 - miles_mean) / miles_var, (250000 - miles_mean) / miles_var,
-                                      loc=miles_mean, scale=miles_var, size=1)
+    customer[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=1000)
+
     # brand
     customer[4] = np.random.uniform(0, 100, 1)
+
     # some random feature:
     customer[5] = np.random.binomial(10, .7, 1)
     customer[6] = np.random.uniform(50, 100, 1)
@@ -48,8 +56,10 @@ def generate_customer():
     return customer
 
 
-def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', seed=0):
-    np.random.seed(seed)
+# generate a bunch of customers as dataframe to fit the glm
+def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', seed=None):
+    if seed is not None:
+        np.random.seed(seed)
 
     feature_data = np.zeros((feature_size, data_size))
     cols = []
@@ -60,22 +70,15 @@ def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', 
     cols.append('gender')
 
     # age
-    age_mean, age_var = 28, 25
-    feature_data[1] = stats.truncnorm.rvs((18 - age_mean) / age_var, (80 - age_mean) / age_var,
-                                          loc=age_mean, scale=age_var, size=data_size)
+    feature_data[1] = get_truncated_normal(mean=25, std=20, low=18, up=90, size=1000)
     cols.append('age')
 
     # car cost
-    car_cost_mean, car_cost_var = 39000, 50000
-    feature_data[2] = stats.truncnorm.rvs((10000 - car_cost_mean) / car_cost_var,
-                                          (400000 - car_cost_mean) / car_cost_var,
-                                          loc=car_cost_mean, scale=car_cost_var, size=data_size)
+    feature_data[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=1000)
     cols.append('car_cost')
 
     # miles
-    miles_mean, miles_var = 8000, 50000
-    feature_data[3] = stats.truncnorm.rvs((200 - miles_mean) / miles_var, (250000 - miles_mean) / miles_var,
-                                          loc=miles_mean, scale=miles_var, size=data_size)
+    feature_data[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=1000)
     cols.append('miles')
 
     # brand
@@ -96,48 +99,47 @@ def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', 
     for i in range(10):
         cols.append(f'rand_feature_{i}')
 
-    # level
+    # level: 0 -> poor, 1 -> medium, 2 -> rich
     feature_data[15] = np.random.choice(3, data_size)
     cols.append('level')
 
-    feature_data = np.transpose(feature_data)
-
     # price
-    price_mean, price_var = 1400, 700
-    price = stats.truncnorm.rvs((400 - price_mean) / price_var, (2700 - price_mean) / price_var,
-                                loc=price_mean, scale=price_var, size=data_size)
-    price = np.array([price])
+    price = get_truncated_normal(mean=800, std=600, low=200, up=2000, size=1000)
     cols.append('price')
 
     # response
-    response = np.zeros(data_size)
-    for i in range(data_size):
-        t = age_mean / feature_data[i][1] + 1.2 * miles_mean / feature_data[i][3] - 4 * car_cost_mean / \
-            feature_data[i][2] \
-            - 2 * 10 * .7 / (feature_data[i][5] + 1) - (feature_data[i][6] - 49) / 50 + 1.5 * feature_data[i][10] \
-            + 0.5 * feature_data[i][11] - 2 * feature_data[i][12] - 1.5 * feature_data[i][13] \
-            + (feature_data[i][15] + 1) * price_mean / price[i]
-        # 50% normal(0, 1) and 60% t
-        if abs(feature_data[i][7]) < 0.67 and abs(feature_data[i][9]) < 0.92:
-            if t > 0:
-                t *= 1.3
-            else:
-                t *= 0.4
-        # first 70% gamma and outside 10% normal(2, 4)
-        if feature_data[i][8] < 7.2 and abs(feature_data[i][14]) > 2.5:
-            if t > 0:
-                t *= 1.3
-            else:
-                t *= 0.4
-        response[i] = np.random.binomial(1, (np.tanh(t / 5.5 + 0.5) + 1) / 2)
-    response = np.array([response])
+    response = \
+        - 0.3 * (feature_data[1] - feature_data[1].mean()) / (feature_data[1].std() + 1e-10) \
+        + 0.9 * (feature_data[2] - feature_data[2].mean()) / (feature_data[2].std() + 1e-10) \
+        - 0.5 * (feature_data[3] - feature_data[3].mean()) / (feature_data[3].std() + 1e-10) \
+        - 0.2 * (feature_data[5] - feature_data[5].mean()) / (feature_data[5].std() + 1e-10) \
+        + 0.2 * (feature_data[6] - feature_data[6].mean()) / (feature_data[6].std() + 1e-10) \
+        - 0.1 * (feature_data[10] - feature_data[10].mean()) / (feature_data[10].std() + 1e-10) \
+        + 0.4 * (feature_data[11] - feature_data[11].mean()) / (feature_data[11].std() + 1e-10) \
+        - 0.2 * (feature_data[12] - feature_data[12].mean()) / (feature_data[12].std() + 1e-10) \
+        + (feature_data[15] - feature_data[15].mean()) / (feature_data[15].std() + 1e-10) \
+        - 1.6 * (price - price.mean()) / (price.std() + 1e-10)
+    response = 1 / (1 + np.exp(- response))
+    # fig, ax = plt.subplots(1)
+    # fig.set_size_inches(23, 10)
+    # ax.plot(response)
+    # plt.show()
+    # exit()
     cols.append('response')
 
-    data = np.concatenate((feature_data, price.T, response.T), axis=1)
+    price = np.array([price])
+    response = np.array([response])
+    data = np.concatenate((feature_data.T, price.T, response.T), axis=1)
     df = pd.DataFrame(data, columns=cols)
     if save:
         df.to_csv(path, index=False)
     return df
+
+
+# df = generate_dataframe(1000, seed=0)
+# pd.set_option('display.max_rows', 1000)
+# print(df)
+# exit()
 
 
 def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm.model'):
