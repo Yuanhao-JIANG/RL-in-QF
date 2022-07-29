@@ -8,7 +8,7 @@ from argparse import Namespace
 import pandas as pd
 import env
 from model_utils import PPO
-from data_utils import rollout
+from data_utils import rollout_ppo
 
 
 def ppo(environment, hp):
@@ -25,7 +25,8 @@ def ppo(environment, hp):
     ppo_net.train()
     for i in range(hp.num_itr):
         # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
-        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = rollout(environment, ppo_net, hp)
+        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
+            rollout_ppo(environment, ppo_net, hp)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
         values, _ = ppo_net(batch_states)
         advantages = batch_returns - values.squeeze().detach()

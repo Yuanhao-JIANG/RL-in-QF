@@ -6,7 +6,7 @@ import env
 from argparse import Namespace
 import pandas as pd
 from model_utils import Reinforce
-from data_utils import rollout_with_gradient
+from data_utils import rollout_reinforce
 
 
 def reinforce(environment, hp):
@@ -21,8 +21,8 @@ def reinforce(environment, hp):
     net.train()
     for i in range(hp.num_itr):
         # generate trajectory
-        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
-            rollout_with_gradient(environment, net, hp, policy_only=True)
+        batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
+            rollout_reinforce(environment, net, hp)
         batch_returns = (batch_returns - batch_returns.mean()) / (batch_returns.std() + 1e-10)
         moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
 
