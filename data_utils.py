@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
-from scipy.special import softmax
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 import torch
 from torch.distributions import MultivariateNormal
-import matplotlib.pyplot as plt
 
 feature_size = 16
 
@@ -30,10 +28,10 @@ def generate_customer(seed=None):
     customer[1] = get_truncated_normal(mean=25, std=20, low=18, up=90, size=1)
 
     # car cost
-    customer[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=1000)
+    customer[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=1)
 
     # miles
-    customer[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=1000)
+    customer[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=1)
 
     # brand
     customer[4] = np.random.uniform(0, 100, 1)
@@ -57,7 +55,7 @@ def generate_customer(seed=None):
 
 
 # generate a bunch of customers as dataframe to fit the glm
-def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', seed=None):
+def generate_dataframe(data_size, save=False, path='./data/dataframe.csv', seed=None):
     if seed is not None:
         np.random.seed(seed)
 
@@ -70,15 +68,15 @@ def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', 
     cols.append('gender')
 
     # age
-    feature_data[1] = get_truncated_normal(mean=25, std=20, low=18, up=90, size=1000)
+    feature_data[1] = get_truncated_normal(mean=25, std=20, low=18, up=90, size=data_size)
     cols.append('age')
 
     # car cost
-    feature_data[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=1000)
+    feature_data[2] = get_truncated_normal(mean=23000, std=10000, low=10000, up=50000, size=data_size)
     cols.append('car_cost')
 
     # miles
-    feature_data[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=1000)
+    feature_data[3] = get_truncated_normal(mean=1000, std=4000, low=1, up=250000, size=data_size)
     cols.append('miles')
 
     # brand
@@ -104,7 +102,7 @@ def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', 
     cols.append('level')
 
     # price
-    price = get_truncated_normal(mean=800, std=600, low=200, up=2000, size=1000)
+    price = get_truncated_normal(mean=800, std=600, low=200, up=2000, size=data_size)
     cols.append('price')
 
     # response
@@ -120,26 +118,16 @@ def generate_dataframe(data_size=1000, save=False, path='./data/dataframe.csv', 
         + (feature_data[15] - feature_data[15].mean()) / (feature_data[15].std() + 1e-10) \
         - 1.6 * (price - price.mean()) / (price.std() + 1e-10)
     response = 1 / (1 + np.exp(- response))
-    # fig, ax = plt.subplots(1)
-    # fig.set_size_inches(23, 10)
-    # ax.plot(response)
-    # plt.show()
-    # exit()
+    response = np.random.binomial(1, response)
     cols.append('response')
 
     price = np.array([price])
     response = np.array([response])
-    data = np.concatenate((feature_data.T, price.T, response.T), axis=1)
-    df = pd.DataFrame(data, columns=cols)
+    data_np = np.concatenate((feature_data.T, price.T, response.T), axis=1)
+    data_df = pd.DataFrame(data_np, columns=cols)
     if save:
-        df.to_csv(path, index=False)
-    return df
-
-
-# df = generate_dataframe(1000, seed=0)
-# pd.set_option('display.max_rows', 1000)
-# print(df)
-# exit()
+        data_df.to_csv(path, index=False)
+    return data_df
 
 
 def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm.model'):
@@ -149,11 +137,15 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
         formula += f' + {df_fit.columns[i + 1]}'
 
     glm_raw = smf.glm(formula=formula, data=df_fit, family=sm.families.Binomial())
-    glm = glm_raw.fit()
+    glm_fit = glm_raw.fit()
     if save:
-        glm.save(path)
-    # print(fitted_model.summary())
-    return glm
+        glm_fit.save(path)
+    return glm_fit
+
+
+# df = generate_dataframe(data_size=10000, save=True, path='./data/dataframe_fit.csv', seed=0)
+# glm = fit_glm(save=True)
+# print(glm.summary())
 
 
 def rollout_ppo(environment, net, hp):
