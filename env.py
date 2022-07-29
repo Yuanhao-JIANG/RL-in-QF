@@ -40,11 +40,11 @@ class Env:
                                                                   self.current_customer[-1] == 0,
                                                                   self.current_customer[-1] == 0], [0, 0, 0]))
         self.df = pd.DataFrame(columns=self.cols)
-
         return self.state
 
     def g(self):
-        return self.current_customer[2]/60 + 10*self.current_customer[5]
+        return 0
+        # return self.current_customer[2]/60
 
     def h(self, var):
         return np.sqrt(var)/2
