@@ -15,19 +15,18 @@ def reinforce(environment, hp):
 
     net = net.to(hp.device)
 
-    moving_avg_reward = 0
     moving_avg_reward_pool = []
 
     net.train()
     for i in range(hp.num_itr):
         # generate trajectory
-        batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
+        batch_log_probs, discounted_batch_returns, p_mean, a_mean, moving_avg_reward = \
             rollout_reinforce(environment, net, hp)
-        batch_returns = (batch_returns - batch_returns.mean()) / (batch_returns.std() + 1e-10)
-        moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
+        discounted_batch_returns = (discounted_batch_returns - discounted_batch_returns.mean()) / \
+                                   (discounted_batch_returns.std() + 1e-10)
 
         # compute the return and loss
-        losses = batch_returns * batch_log_probs
+        losses = discounted_batch_returns * batch_log_probs
         for j in range(len(losses)):
             losses[j] *= - (hp.gamma ** j)
 
@@ -53,9 +52,10 @@ hyperparameter = Namespace(
     num_itr=3000,
     batch_num=1,
     episode_size=300,
+    moving_avg_num=300,
     num_state_features=21,
-    price_min=400,
-    price_max=2700,
+    price_min=200,
+    price_max=2000,
     cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/reinforce_model.pth',

@@ -19,15 +19,12 @@ def ppo(environment, hp):
 
     ppo_net = ppo_net.to(hp.device)
 
-    moving_avg_reward = 0
     moving_avg_reward_pool = []
 
     ppo_net.train()
     for i in range(hp.num_itr):
-        # generate hp.batch_num trajectories, with each trajectory of the length hp.episode_size
-        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, mean_reward = \
+        batch_states, batch_log_probs, batch_returns, p_mean, a_mean, moving_avg_reward = \
             rollout_ppo(environment, ppo_net, hp)
-        moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
         values, _ = ppo_net(batch_states)
         advantages = batch_returns - values.squeeze().detach()
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
@@ -40,8 +37,8 @@ def ppo(environment, hp):
 
             ratios = torch.exp(curr_log_probs - batch_log_probs)
             actor_loss = (
-                    - torch.min(ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages)
-                          ).mean()
+                - torch.min(ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages)
+            ).mean()
             critic_loss = nn.MSELoss()(values.squeeze(), batch_returns)
             loss = actor_loss + critic_loss
 
@@ -65,10 +62,11 @@ hyperparameter = Namespace(
     num_itr=600,
     batch_num=5,
     episode_size=300,
+    moving_avg_num=300,
     num_update_per_itr=5,
     num_state_features=21,
-    price_min=400,
-    price_max=2700,
+    price_min=200,
+    price_max=2000,
     clip=0.2,
     cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),

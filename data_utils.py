@@ -186,9 +186,10 @@ def rollout_ppo(environment, net, hp):
     batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
     p_mean = torch.tensor(p_mean, dtype=torch.float).mean()
     a_mean = torch.tensor(a_mean, dtype=torch.float).mean()
-    batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
+    batch_returns, _ = compute_returns(batch_rewards, hp.gamma)
 
-    return batch_states, batch_log_probs, batch_returns, p_mean, a_mean, torch.tensor(batch_rewards).mean()
+    return batch_states, batch_log_probs, batch_returns.to(hp.device), p_mean, a_mean, \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
 
 
 # rollout for a2c
@@ -200,6 +201,7 @@ def rollout_a2c(environment, net, hp):
     batch_rewards = []
     values = torch.tensor([]).to(hp.device)
     advantages = torch.tensor([]).to(hp.device)
+    discounted_advantages = torch.tensor([]).to(hp.device)
     cov_mat = hp.cov_mat.to(hp.device)
 
     for _ in range(hp.batch_num):
@@ -229,12 +231,15 @@ def rollout_a2c(environment, net, hp):
 
         tgt, _ = net.forward(state)
         ep_adv = torch.zeros(len(ep_rewards)).to(hp.device)
+        discounted_ep_adv = torch.zeros(len(ep_rewards)).to(hp.device)
         for t in reversed(range(len(ep_rewards))):
             tgt = ep_rewards[t] + hp.gamma * tgt
             adv = tgt - ep_values[t]
-            ep_adv[t] = ((hp.gamma ** t) * adv).detach()
+            ep_adv[t] = adv.detach()
+            discounted_ep_adv[t] = ((hp.gamma ** t) * adv).detach()
         values = torch.cat((values, ep_values))
         advantages = torch.cat((advantages, ep_adv))
+        discounted_advantages = torch.cat((discounted_advantages, discounted_ep_adv))
         batch_rewards.append(ep_rewards)
 
     batch_states = torch.stack(batch_states)
@@ -242,7 +247,8 @@ def rollout_a2c(environment, net, hp):
     p_mean = torch.tensor(p_mean, dtype=torch.float).mean()
     a_mean = torch.tensor(a_mean, dtype=torch.float).mean()
 
-    return batch_states, batch_log_probs, advantages, values, p_mean, a_mean, torch.tensor(batch_rewards).mean()
+    return batch_states, batch_log_probs, advantages, discounted_advantages, values, p_mean, a_mean, \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
 
 
 # rollout that requires gradient on policy log_prob
@@ -280,18 +286,21 @@ def rollout_reinforce(environment, net, hp):
     batch_log_probs = torch.stack(batch_log_probs)
     p_mean = torch.tensor(p_mean, dtype=torch.float).mean()
     a_mean = torch.tensor(a_mean, dtype=torch.float).mean()
-    batch_returns = compute_returns(batch_rewards, hp.gamma).to(hp.device)
+    _, discounted_returns = compute_returns(batch_rewards, hp.gamma)
 
-    return batch_log_probs, batch_returns, p_mean, a_mean, torch.tensor(batch_rewards).mean()
+    return batch_log_probs, discounted_returns.to(hp.device), p_mean, a_mean, \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
 
 
 def compute_returns(batch_rewards, gamma):
     batch_returns = []
+    discounted_batch_returns = []
     # iterate through each episode
     for ep_rewards in reversed(batch_rewards):
         discounted_reward = 0
-        for r in reversed(ep_rewards):
-            discounted_reward = r + discounted_reward * gamma
+        for t in reversed(range(len(ep_rewards))):
+            discounted_reward = ep_rewards[t] + discounted_reward * gamma
             batch_returns.insert(0, discounted_reward)
+            discounted_batch_returns.insert(0, (gamma ** t) * discounted_reward)
 
-    return torch.tensor(batch_returns, dtype=torch.float)
+    return torch.tensor(batch_returns, dtype=torch.float), torch.tensor(discounted_batch_returns, dtype=torch.float)

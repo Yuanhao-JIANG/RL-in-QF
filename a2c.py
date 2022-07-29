@@ -16,17 +16,16 @@ def a2c(environment, hp):
 
     actor_critic = actor_critic.to(hp.device)
 
-    moving_avg_reward = 0
     moving_avg_reward_pool = []
 
     actor_critic.train()
     for i in range(hp.num_itr):
-        _, batch_log_probs, advantages, values, p_mean, a_mean, mean_reward = rollout_a2c(environment, actor_critic, hp)
-        moving_avg_reward += (mean_reward.item() - moving_avg_reward) / (i + 1)
+        _, batch_log_probs, advantages, discounted_advantages, values, p_mean, a_mean, moving_avg_reward = \
+            rollout_a2c(environment, actor_critic, hp)
 
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
         critic_loss = (- advantages * values).mean()
-        actor_loss = (- advantages * batch_log_probs).mean()
+        actor_loss = (- discounted_advantages * batch_log_probs).mean()
         ac_loss = actor_loss + critic_loss
 
         ac_optimizer.zero_grad()
@@ -50,9 +49,10 @@ hyperparameter = Namespace(
     num_itr=3000,
     batch_num=1,
     episode_size=300,
+    moving_avg_num=300,
     num_state_features=21,
-    price_min=400,
-    price_max=2700,
+    price_min=200,
+    price_max=2000,
     cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     model_save_path='./data/a2c_model.pth',
