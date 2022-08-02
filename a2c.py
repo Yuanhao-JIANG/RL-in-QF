@@ -48,7 +48,7 @@ def a2c(environment, hp):
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])
-    df.to_csv(hp.csv_out_path, mode='a', header=False)
+    df.to_csv(hp.csv_out_path, mode='a', header=False, index=False)
     torch.save(actor.state_dict(), hp.actor_save_path)
     torch.save(critic.state_dict(), hp.critic_save_path)
 
