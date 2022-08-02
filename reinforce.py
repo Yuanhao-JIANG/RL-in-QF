@@ -10,7 +10,7 @@ from data_utils import rollout_reinforce
 
 
 def reinforce(environment, hp):
-    actor = Actor(hp.num_state_features, hp.price_min, hp.price_max)
+    actor = Actor(hp.num_state_features, (hp.price_max - hp.price_min) / hp.price_binwidth)
     actor_optimizer = optim.Adam(actor.parameters(), lr=hp.actor_lr)
 
     actor = actor.to(hp.device)
@@ -20,7 +20,7 @@ def reinforce(environment, hp):
     actor.train()
     for i in range(hp.num_itr):
         # generate trajectory
-        batch_log_probs, discounted_batch_returns, p_mean, a_mean, moving_avg_reward = \
+        batch_log_probs, discounted_batch_returns, price_mean, moving_avg_reward = \
             rollout_reinforce(environment, actor, hp)
         discounted_batch_returns = (discounted_batch_returns - discounted_batch_returns.mean()) / \
                                    (discounted_batch_returns.std() + 1e-10)
@@ -33,8 +33,8 @@ def reinforce(environment, hp):
         actor_optimizer.step()
 
         if i % 5 == 0:
-            sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward.item()))
-            sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
+            sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
+                             .format(i, price_mean.item(), moving_avg_reward.item()))
             print(f'actor_loss: {actor_loss}')
             moving_avg_reward_pool.append(moving_avg_reward.item())
 
@@ -54,7 +54,7 @@ hyperparameter = Namespace(
     num_state_features=21,
     price_min=200,
     price_max=2000,
-    cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
+    price_binwidth=15,
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     actor_save_path='./data/reinforce_actor.pth',
     csv_out_path='./data/reinforce_out.csv'
