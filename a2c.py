@@ -5,32 +5,37 @@ import statsmodels.api as sm
 from argparse import Namespace
 import pandas as pd
 import env
-from model_utils import ActorCritic
+from model_utils import Actor, Critic
 from data_utils import rollout_a2c
 
 
 # train method
 def a2c(environment, hp):
-    actor_critic = ActorCritic(hp.num_state_features, hp.price_min, hp.price_max)
-    ac_optimizer = optim.Adam(actor_critic.parameters(), lr=hp.lr)
+    actor, critic = Actor(hp.num_state_features, hp.price_min, hp.price_max), Critic(hp.num_state_features)
+    actor_optimizer, critic_optimizer = \
+        optim.Adam(actor.parameters(), lr=hp.actor_lr), optim.Adam(critic.parameters(), lr=hp.critic_lr)
 
-    actor_critic = actor_critic.to(hp.device)
+    actor, critic = actor.to(hp.device), critic.to(hp.device)
 
     moving_avg_reward_pool = []
 
-    actor_critic.train()
+    actor.train()
+    critic.train()
     for i in range(hp.num_itr):
         _, batch_log_probs, advantages, discounted_advantages, values, p_mean, a_mean, moving_avg_reward = \
-            rollout_a2c(environment, actor_critic, hp)
+            rollout_a2c(environment, actor, critic, hp)
 
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
         critic_loss = (- advantages * values).mean()
         actor_loss = (- discounted_advantages * batch_log_probs).mean()
-        ac_loss = actor_loss + critic_loss
 
-        ac_optimizer.zero_grad()
-        ac_loss.backward()
-        ac_optimizer.step()
+        actor_optimizer.zero_grad()
+        actor_loss.backward()
+        actor_optimizer.step()
+
+        critic_optimizer.zero_grad()
+        critic_loss.backward()
+        critic_optimizer.step()
 
         if i % 5 == 0:
             sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward.item()))
@@ -41,11 +46,13 @@ def a2c(environment, hp):
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])
     df.to_csv(hp.csv_out_path, mode='a', header=False)
-    torch.save(actor_critic.state_dict(), hp.model_save_path)
+    torch.save(actor.state_dict(), hp.actor_save_path)
+    torch.save(critic.state_dict(), hp.critic_save_path)
 
 
 hyperparameter = Namespace(
-    lr=3e-4,
+    actor_lr=3e-4,
+    critic_lr=3e-4,
     gamma=0.99,
     num_itr=3000,
     batch_num=1,
@@ -56,7 +63,8 @@ hyperparameter = Namespace(
     price_max=2000,
     cov_mat=torch.diag(torch.full(size=(1,), fill_value=100.)),
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    model_save_path='./data/a2c_model.pth',
+    actor_save_path='./data/a2c_actor.pth',
+    critic_save_path='./data/a2c_critic.pth',
     csv_out_path='./data/a2c_out.csv'
 )
 glm = sm.load('./data/glm.model')

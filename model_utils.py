@@ -18,52 +18,14 @@ def init_weights(m):
         m.bias.data.fill_(0.)
 
 
-# a2c network
-class ActorCritic(nn.Module):
-    def __init__(self, num_state_features, price_min, price_max):
-        super(ActorCritic, self).__init__()
+# actor network
+class Actor(nn.Module):
+    def __init__(self, in_dim, price_min, price_max):
+        super(Actor, self).__init__()
         self.price_min = price_min
         self.price_delta = price_max - price_min
-
-        # value
-        self.critic_net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1)
-        )
-        self.critic_net.apply(init_weights)
-
-        # policy
-        self.actor_net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-            Mul(1e-3),
-            nn.Sigmoid()
-        )
-        self.actor_net.apply(init_weights)
-
-    def forward(self, state):
-        state = Variable(state.float())
-
-        value = self.critic_net(state)
-        policy_mean = self.actor_net(state) * self.price_delta + self.price_min
-
-        return value, policy_mean
-
-
-class Reinforce(nn.Module):
-    def __init__(self, num_state_features, price_min, price_max):
-        super(Reinforce, self).__init__()
-        self.price_min = price_min
-        self.price_delta = price_max - price_min
-
         self.net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
+            nn.Linear(in_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
@@ -75,44 +37,24 @@ class Reinforce(nn.Module):
 
     def forward(self, state):
         state = Variable(state.float())
-
         policy_mean = self.net(state) * self.price_delta + self.price_min
-
         return policy_mean
 
 
-class PPO(nn.Module):
-    def __init__(self, num_state_features, price_min, price_max):
-        super(PPO, self).__init__()
-        self.price_min = price_min
-        self.price_delta = price_max - price_min
-
-        # value
-        self.critic_net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
+# critic network
+class Critic(nn.Module):
+    def __init__(self, in_dim):
+        super(Critic, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(in_dim, 128),
             nn.ReLU(),
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, 1)
         )
-        self.critic_net.apply(init_weights)
-
-        # policy
-        self.actor_net = nn.Sequential(
-            nn.Linear(num_state_features, 128),
-            nn.ReLU(),
-            nn.Linear(128, 128),
-            nn.ReLU(),
-            nn.Linear(128, 1),
-            Mul(1e-3),
-            nn.Sigmoid()
-        )
-        self.actor_net.apply(init_weights)
+        self.net.apply(init_weights)
 
     def forward(self, state):
         state = Variable(state.float())
-
-        value = self.critic_net(state)
-        policy_mean = self.actor_net(state) * self.price_delta + self.price_min
-
-        return value, policy_mean
+        value = self.net(state)
+        return value

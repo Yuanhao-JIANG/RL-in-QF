@@ -148,7 +148,7 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
 # print(glm.summary())
 
 
-def rollout_ppo(environment, net, hp):
+def rollout_ppo(environment, actor, hp):
     batch_states = []
     batch_log_probs = []
     p_mean = []
@@ -166,7 +166,7 @@ def rollout_ppo(environment, net, hp):
             batch_states.append(state)
 
             # compute action and log_prob
-            _, policy_mean = net.forward(state)
+            policy_mean = actor.forward(state)
             distro = MultivariateNormal(policy_mean, cov_mat)
             action = distro.sample().detach()
             log_prob = distro.log_prob(action).detach()
@@ -193,7 +193,7 @@ def rollout_ppo(environment, net, hp):
 
 
 # rollout for a2c
-def rollout_a2c(environment, net, hp):
+def rollout_a2c(environment, actor, critic, hp):
     batch_states = []
     batch_log_probs = []
     p_mean = []
@@ -214,7 +214,8 @@ def rollout_a2c(environment, net, hp):
             batch_states.append(state)
 
             # compute action and log_prob
-            v, policy_mean = net.forward(state)
+            policy_mean = actor.forward(state)
+            v = critic.forward(state)
             distro = MultivariateNormal(policy_mean, cov_mat)
             action = distro.sample()
             log_prob = distro.log_prob(action)
@@ -229,7 +230,7 @@ def rollout_a2c(environment, net, hp):
             a_mean.append(action)
             batch_log_probs.append(log_prob)
 
-        tgt, _ = net.forward(state)
+        tgt = critic.forward(state)
         ep_adv = torch.zeros(len(ep_rewards)).to(hp.device)
         discounted_ep_adv = torch.zeros(len(ep_rewards)).to(hp.device)
         for t in reversed(range(len(ep_rewards))):
@@ -252,7 +253,7 @@ def rollout_a2c(environment, net, hp):
 
 
 # rollout that requires gradient on policy log_prob
-def rollout_reinforce(environment, net, hp):
+def rollout_reinforce(environment, actor, hp):
     batch_log_probs = []
     p_mean = []
     a_mean = []
@@ -267,7 +268,7 @@ def rollout_reinforce(environment, net, hp):
         # run an episode
         for _ in range(hp.episode_size):
             # compute action and log_prob
-            policy_mean = net.forward(state)
+            policy_mean = actor.forward(state)
             distro = MultivariateNormal(policy_mean, cov_mat)
             action = distro.sample()
             log_prob = distro.log_prob(action)
