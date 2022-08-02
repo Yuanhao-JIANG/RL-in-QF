@@ -36,9 +36,10 @@ def reinforce(environment, hp):
         optimizer.step()
 
         if i % 5 == 0:
-            sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward))
+            sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward.item()))
             sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
-            moving_avg_reward_pool.append(moving_avg_reward)
+            print(f'loss: {loss}')
+            moving_avg_reward_pool.append(moving_avg_reward.item())
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])
@@ -64,3 +65,5 @@ hyperparameter = Namespace(
 glm = sm.load('./data/glm.model')
 env_train = env.Env(glm)
 reinforce(env_train, hyperparameter)
+# while True:
+#     reinforce(env_train, hyperparameter)

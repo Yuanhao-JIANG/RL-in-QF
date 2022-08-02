@@ -40,15 +40,20 @@ def ppo(environment, hp):
                 - torch.min(ratios * advantages, torch.clamp(ratios, 1 - hp.clip, 1 + hp.clip) * advantages)
             ).mean()
             critic_loss = nn.MSELoss()(values.squeeze(), batch_returns)
-            loss = actor_loss + critic_loss
+            policy_edge_loss = nn.MSELoss()(
+                policy_means.squeeze(),
+                torch.tensor([(hp.price_min + hp.price_max)/2] * len(policy_means), dtype=torch.float).to(hp.device)
+            )
+            loss = actor_loss + critic_loss + policy_edge_loss * 1e-3
 
             ppo_optimizer.zero_grad()
             loss.backward()
             ppo_optimizer.step()
 
-        sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward))
+        sys.stdout.write("Iteration: {}, moving average reward: {}\n".format(i, moving_avg_reward.item()))
         sys.stdout.write("policy_mean: {}, action: {}\n".format(p_mean.item(), a_mean.item()))
-        moving_avg_reward_pool.append(moving_avg_reward)
+        print(f'actor_loss: {actor_loss}, critic_loss: {critic_loss}, policy_edge_loss: {policy_edge_loss}')
+        moving_avg_reward_pool.append(moving_avg_reward.item())
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])
@@ -76,3 +81,5 @@ hyperparameter = Namespace(
 glm = sm.load('./data/glm.model')
 env_train = env.Env(glm)
 ppo(env_train, hyperparameter)
+# while True:
+#     ppo(env_train, hyperparameter)
