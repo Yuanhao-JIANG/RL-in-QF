@@ -50,9 +50,9 @@ def ppo(environment, hp):
             critic_optimizer.step()
 
         sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                         .format(i, price_mean.item(), moving_avg_reward.item()))
+                         .format(i, price_mean, moving_avg_reward))
         print(f'actor_loss: {actor_loss}, critic_loss: {critic_loss}')
-        moving_avg_reward_pool.append(moving_avg_reward.item())
+        moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])

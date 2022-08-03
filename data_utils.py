@@ -183,8 +183,8 @@ def rollout_ppo(environment, actor, hp):
     price_mean = torch.tensor(price_mean, dtype=torch.float).mean()
     batch_returns, _ = compute_returns(batch_rewards, hp.gamma)
 
-    return batch_states, batch_log_probs, batch_returns.to(hp.device), price_mean, \
-        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
+    return batch_states, batch_log_probs, batch_returns.to(hp.device), price_mean.item(), \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean().item()
 
 
 # rollout for a2c
@@ -238,8 +238,8 @@ def rollout_a2c(environment, actor, critic, hp):
     batch_log_probs = torch.stack(batch_log_probs)
     price_mean = torch.tensor(price_mean, dtype=torch.float).mean()
 
-    return batch_states, batch_log_probs, advantages, discounted_advantages, values, price_mean, \
-        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
+    return batch_states, batch_log_probs, advantages, discounted_advantages, values, price_mean.item(), \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean().item()
 
 
 # rollout that requires gradient on policy log_prob
@@ -275,8 +275,8 @@ def rollout_reinforce(environment, actor, hp):
     price_mean = torch.tensor(price_mean, dtype=torch.float).mean()
     _, discounted_returns = compute_returns(batch_rewards, hp.gamma)
 
-    return batch_log_probs, discounted_returns.to(hp.device), price_mean, \
-        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean()
+    return batch_log_probs, discounted_returns.to(hp.device), price_mean.item(), \
+        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean().item()
 
 
 def compute_returns(batch_rewards, gamma):
