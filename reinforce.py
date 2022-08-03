@@ -23,7 +23,7 @@ def reinforce(environment, hp):
         ep_actions = []
         ep_returns = []
         actor_loss_mean = 0
-        # generate a trajectory
+        # run a trajectory
         state = torch.from_numpy(environment.reset()).to(hp.device)
         for step in range(hp.episode_size):
             ep_states.append(state)
@@ -40,7 +40,7 @@ def reinforce(environment, hp):
 
         # compute and normalize returns
         for t in reversed(range(len(ep_returns) - 1)):
-            ep_returns[t] = ep_returns[t] + hp.gamma * ep_returns[t + 1]
+            ep_returns[t] += hp.gamma * ep_returns[t + 1]
         ep_returns = torch.tensor(ep_returns, dtype=torch.float)
         ep_returns = (ep_returns - ep_returns.mean()) / (ep_returns.std(dim=0) + 1e-10)
 
