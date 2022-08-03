@@ -3,7 +3,6 @@ import pandas as pd
 from scipy import stats
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
-import torch
 
 feature_size = 16
 
@@ -35,7 +34,7 @@ def generate_customer(seed=None):
     # brand
     customer[4] = np.random.uniform(0, 100, 1)
 
-    # some random feature:
+    # some random features:
     customer[5] = np.random.binomial(10, .7, 1)
     customer[6] = np.random.uniform(50, 100, 1)
     customer[7] = np.random.normal(0, 1, 1)
@@ -82,7 +81,7 @@ def generate_dataframe(data_size, save=False, path='./data/dataframe.csv', seed=
     feature_data[4] = np.random.uniform(0, 100, data_size)
     cols.append('brand')
 
-    # some random feature:
+    # some random features:
     feature_data[5] = np.random.binomial(10, .7, data_size)
     feature_data[6] = np.random.uniform(50, 100, data_size)
     feature_data[7] = np.random.normal(0, 1, data_size)
@@ -145,57 +144,3 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
 # df = generate_dataframe(data_size=10000, save=True, path='./data/dataframe_fit.csv', seed=0)
 # glm = fit_glm(save=True)
 # print(glm.summary())
-
-
-def rollout_ppo(environment, actor, hp):
-    batch_states = []
-    batch_log_probs = []
-    price_mean = []
-    batch_rewards = []
-
-    for _ in range(hp.batch_num):
-        # rewards per episode
-        ep_rewards = []
-        state = torch.from_numpy(environment.reset()).to(hp.device)
-
-        # run an episode
-        for _ in range(hp.episode_size):
-            batch_states.append(state)
-
-            # compute action and log_prob
-            policy_distro = actor.forward(state)
-            action = policy_distro.sample()
-            log_prob = policy_distro.log_prob(action).detach()
-            price = hp.price_min + action * hp.price_binwidth
-
-            # compute reward and go to next state
-            r, state = environment.step(price.item())
-            state = torch.from_numpy(state).to(hp.device)
-
-            ep_rewards.append(r)
-            price_mean.append(price)
-            batch_log_probs.append(log_prob)
-
-        batch_rewards.append(ep_rewards)
-
-    batch_states = torch.stack(batch_states)
-    batch_log_probs = torch.tensor(batch_log_probs, dtype=torch.float).to(hp.device)
-    price_mean = torch.tensor(price_mean, dtype=torch.float).mean()
-    batch_returns, _ = compute_returns(batch_rewards, hp.gamma)
-
-    return batch_states, batch_log_probs, batch_returns.to(hp.device), price_mean.item(), \
-        torch.flatten(torch.tensor(batch_rewards))[-hp.moving_avg_num:].mean().item()
-
-
-def compute_returns(batch_rewards, gamma):
-    batch_returns = []
-    discounted_batch_returns = []
-    # iterate through each episode
-    for ep_rewards in reversed(batch_rewards):
-        discounted_reward = 0
-        for t in reversed(range(len(ep_rewards))):
-            discounted_reward = ep_rewards[t] + discounted_reward * gamma
-            batch_returns.insert(0, discounted_reward)
-            discounted_batch_returns.insert(0, (gamma ** t) * discounted_reward)
-
-    return torch.tensor(batch_returns, dtype=torch.float), torch.tensor(discounted_batch_returns, dtype=torch.float)

@@ -7,7 +7,6 @@ from argparse import Namespace
 import pandas as pd
 import env
 from model_utils import Actor, Critic
-from data_utils import rollout_ppo
 
 
 def ppo(environment, hp):
@@ -23,13 +22,48 @@ def ppo(environment, hp):
     actor.train()
     critic.train()
     for i in range(hp.num_itr):
-        batch_states, batch_log_probs, batch_returns, price_mean, moving_avg_reward = \
-            rollout_ppo(environment, actor, hp)
+        # collect set of trajectories
+        price_mean = 0
+        batch_states = []
+        batch_log_probs = []
+        batch_returns = []
+        for _ in range(hp.batch_size):
+            # run a trajectory
+            ep_returns = []
+            state = torch.from_numpy(environment.reset()).to(hp.device)
+            for _ in range(hp.episode_size):
+                batch_states.append(state)
+
+                # compute action by current policy
+                policy_distro = actor.forward(state)
+                action = policy_distro.sample()
+                log_prob = policy_distro.log_prob(action)
+                price = hp.price_min + action * hp.price_binwidth
+
+                # compute reward and go to next state
+                r, state = environment.step(price.item())
+                state = torch.from_numpy(state).to(hp.device)
+
+                ep_returns.append(r)
+                price_mean += price
+                batch_log_probs.append(log_prob)
+            batch_returns.append(ep_returns)
+            moving_avg_reward = sum(ep_returns) / len(ep_returns)
+            price_mean = price_mean / hp.episode_size
+        batch_states = torch.stack(batch_states).to(hp.device)
+        batch_log_probs = torch.stack(batch_log_probs).to(hp.device).detach()
+
+        # compute returns and advantages
+        for e in reversed(range(len(batch_returns))):
+            for t in reversed(range(len(batch_returns[e]) - 1)):
+                batch_returns[e][t] += hp.gamma * batch_returns[e][t + 1]
+        batch_returns = torch.flatten(torch.tensor(batch_returns, dtype=torch.float)).to(hp.device)
         values = critic(batch_states)
-        advantages = batch_returns - values.squeeze().detach()
+        advantages = (batch_returns - values.squeeze()).detach()
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
 
-        for _ in range(hp.num_update_per_itr):
+        # update network
+        for _ in range(hp.num_updates_per_itr):
             policy_distros = actor.forward(batch_states)
             actions = policy_distros.sample()
             curr_log_probs = policy_distros.log_prob(actions)
@@ -66,10 +100,9 @@ hyperparameter = Namespace(
     critic_lr=1e-3,
     gamma=0.99,
     num_itr=600,
-    batch_num=5,
+    batch_size=5,
     episode_size=300,
-    moving_avg_num=300,
-    num_update_per_itr=5,
+    num_updates_per_itr=5,
     num_state_features=21,
     price_min=200,
     price_max=2000,
