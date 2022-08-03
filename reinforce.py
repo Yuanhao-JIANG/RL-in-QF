@@ -55,9 +55,11 @@ def reinforce(environment, hp):
             ep_returns.append(r)
             moving_avg_reward += r
 
-        # compute returns
+        # compute and normalize returns
         for t in reversed(range(len(ep_returns) - 1)):
             ep_returns[t] = ep_returns[t] + hp.gamma * ep_returns[t + 1]
+        ep_returns = torch.tensor(ep_returns, dtype=torch.float)
+        ep_returns = (ep_returns - ep_returns.mean()) / (ep_returns.std(dim=0) + 1e-10)
 
         # update policy network
         for step in range(hp.episode_size):
