@@ -19,24 +19,67 @@ def reinforce(environment, hp):
 
     actor.train()
     for i in range(hp.num_itr):
-        # generate trajectory
-        batch_log_probs, discounted_batch_returns, price_mean, moving_avg_reward = \
-            rollout_reinforce(environment, actor, hp)
-        discounted_batch_returns = (discounted_batch_returns - discounted_batch_returns.mean()) / \
-                                   (discounted_batch_returns.std() + 1e-10)
+        # ======================================= update network per batch ============================================
+        # # generate trajectory
+        # batch_log_probs, discounted_batch_returns, price_mean, moving_avg_reward = \
+        #     rollout_reinforce(environment, actor, hp)
+        # discounted_batch_returns = (discounted_batch_returns - discounted_batch_returns.mean()) / \
+        #                            (discounted_batch_returns.std() + 1e-10)
+        #
+        # # compute the return and loss
+        # actor_loss_mean = (- discounted_batch_returns * batch_log_probs).mean()
+        #
+        # actor_optimizer.zero_grad()
+        # actor_loss_mean.backward()
+        # actor_optimizer.step()
+        # =============================================================================================================
 
-        # compute the return and loss
-        actor_loss = (- discounted_batch_returns * batch_log_probs).mean()
+        # ======================================= update network per step =============================================
+        moving_avg_reward = 0
+        ep_states = []
+        ep_actions = []
+        ep_returns = []
+        actor_loss_mean = 0
+        # generate a trajectory
+        state = torch.from_numpy(environment.reset()).to(hp.device)
+        for step in range(hp.episode_size):
+            ep_states.append(state)
+            policy_distro = actor.forward(state)
+            action = policy_distro.sample()
+            price = hp.price_min + action * hp.price_binwidth
 
-        actor_optimizer.zero_grad()
-        actor_loss.backward()
-        actor_optimizer.step()
+            r, state = environment.step(price.item())
+            state = torch.from_numpy(state).to(hp.device)
+
+            ep_actions.append(action)
+            ep_returns.append(r)
+            moving_avg_reward += r
+
+        # compute returns
+        for t in reversed(range(len(ep_returns) - 1)):
+            ep_returns[t] = ep_returns[t] + hp.gamma * ep_returns[t + 1]
+
+        # update policy network
+        for step in range(hp.episode_size):
+            policy_distro = actor.forward(ep_states[step])
+            log_prob = policy_distro.log_prob(ep_actions[step])
+            actor_loss = - (hp.gamma ** step) * ep_returns[step] * log_prob
+            actor_loss_mean += actor_loss
+
+            actor_optimizer.zero_grad()
+            actor_loss.backward()
+            actor_optimizer.step()
+
+        actor_loss_mean = actor_loss_mean / hp.episode_size
+        price_mean = hp.price_min + (sum(ep_actions) / len(ep_returns)) * hp.price_binwidth
+        moving_avg_reward = moving_avg_reward / hp.episode_size
+        # =============================================================================================================
 
         if i % 5 == 0:
             sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                             .format(i, price_mean.item(), moving_avg_reward.item()))
-            print(f'actor_loss: {actor_loss}')
-            moving_avg_reward_pool.append(moving_avg_reward.item())
+                             .format(i, price_mean, moving_avg_reward))
+            print(f'actor_loss: {actor_loss_mean}')
+            moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])

@@ -23,28 +23,69 @@ def a2c(environment, hp):
     actor.train()
     critic.train()
     for i in range(hp.num_itr):
-        _, batch_log_probs, advantages, discounted_advantages, values, price_mean, moving_avg_reward = \
-            rollout_a2c(environment, actor, critic, hp)
+        # ======================================= update network per batch ============================================
+        # _, batch_log_probs, advantages, discounted_advantages, values, price_mean, moving_avg_reward = \
+        #     rollout_a2c(environment, actor, critic, hp)
+        #
+        # advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
+        # discounted_advantages = \
+        #     (discounted_advantages - discounted_advantages.mean()) / (discounted_advantages.std() + 1e-10)
+        # critic_loss_mean = (- advantages * values).mean()
+        # actor_loss_mean = (- discounted_advantages * batch_log_probs).mean()
+        #
+        # actor_optimizer.zero_grad()
+        # actor_loss_mean.backward()
+        # actor_optimizer.step()
+        #
+        # critic_optimizer.zero_grad()
+        # critic_loss_mean.backward()
+        # critic_optimizer.step()
+        # =============================================================================================================
 
-        advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
-        discounted_advantages = \
-            (discounted_advantages - discounted_advantages.mean()) / (discounted_advantages.std() + 1e-10)
-        critic_loss = (- advantages * values).mean()
-        actor_loss = (- discounted_advantages * batch_log_probs).mean()
+        # ======================================= update network per step =============================================
+        moving_avg_reward = 0
+        price_mean = 0
+        actor_loss_mean = 0
+        critic_loss_mean = 0
+        state = torch.from_numpy(environment.reset()).to(hp.device)
+        for step in range(hp.episode_size):
+            policy_distro = actor.forward(state)
+            action = policy_distro.sample()
+            log_prob = policy_distro.log_prob(action)
+            price = hp.price_min + action * hp.price_binwidth
+            v = critic.forward(state)
 
-        actor_optimizer.zero_grad()
-        actor_loss.backward()
-        actor_optimizer.step()
+            r, state = environment.step(price.item())
+            state = torch.from_numpy(state).to(hp.device)
+            v_next = critic.forward(state)
+            advantage = (r + hp.gamma * v_next - v).detach()
+            actor_loss = - (hp.gamma ** step) * advantage * log_prob
+            critic_loss = - advantage * v
+            actor_loss_mean += actor_loss
+            critic_loss_mean += critic_loss
 
-        critic_optimizer.zero_grad()
-        critic_loss.backward()
-        critic_optimizer.step()
+            actor_optimizer.zero_grad()
+            actor_loss.backward()
+            actor_optimizer.step()
+
+            critic_optimizer.zero_grad()
+            critic_loss.backward()
+            critic_optimizer.step()
+
+            moving_avg_reward += r
+            price_mean += price
+
+        critic_loss_mean = critic_loss_mean / hp.episode_size
+        actor_loss_mean = actor_loss_mean / hp.episode_size
+        moving_avg_reward = moving_avg_reward / hp.episode_size
+        price_mean = price_mean / hp.episode_size
+        # =============================================================================================================
 
         if i % 5 == 0:
             sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                             .format(i, price_mean.item(), moving_avg_reward.item()))
-            print(f'actor_loss: {actor_loss}, critic_loss: {critic_loss}')
-            moving_avg_reward_pool.append(moving_avg_reward.item())
+                             .format(i, price_mean, moving_avg_reward))
+            print(f'actor_loss: {actor_loss_mean.item()}, critic_loss: {critic_loss_mean.item()}')
+            moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model
     df = pd.DataFrame([moving_avg_reward_pool])
@@ -55,7 +96,7 @@ def a2c(environment, hp):
 
 hyperparameter = Namespace(
     actor_lr=3e-4,
-    critic_lr=1e-3,
+    critic_lr=3e-4,
     gamma=0.99,
     num_itr=3000,
     batch_num=1,
