@@ -6,7 +6,6 @@ import env
 from argparse import Namespace
 import pandas as pd
 from model_utils import Actor
-from data_utils import rollout_reinforce
 
 
 def reinforce(environment, hp):
@@ -19,22 +18,6 @@ def reinforce(environment, hp):
 
     actor.train()
     for i in range(hp.num_itr):
-        # ======================================= update network per batch ============================================
-        # # generate trajectory
-        # batch_log_probs, discounted_batch_returns, price_mean, moving_avg_reward = \
-        #     rollout_reinforce(environment, actor, hp)
-        # discounted_batch_returns = (discounted_batch_returns - discounted_batch_returns.mean()) / \
-        #                            (discounted_batch_returns.std() + 1e-10)
-        #
-        # # compute the return and loss
-        # actor_loss_mean = (- discounted_batch_returns * batch_log_probs).mean()
-        #
-        # actor_optimizer.zero_grad()
-        # actor_loss_mean.backward()
-        # actor_optimizer.step()
-        # =============================================================================================================
-
-        # ======================================= update network per step =============================================
         moving_avg_reward = 0
         ep_states = []
         ep_actions = []
@@ -75,7 +58,6 @@ def reinforce(environment, hp):
         actor_loss_mean = actor_loss_mean / hp.episode_size
         price_mean = hp.price_min + (sum(ep_actions) / len(ep_returns)) * hp.price_binwidth
         moving_avg_reward = moving_avg_reward / hp.episode_size
-        # =============================================================================================================
 
         if i % 5 == 0:
             sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
@@ -93,9 +75,7 @@ hyperparameter = Namespace(
     actor_lr=3e-4,
     gamma=0.99,
     num_itr=3000,
-    batch_num=1,
     episode_size=300,
-    moving_avg_num=300,
     num_state_features=21,
     price_min=200,
     price_max=2000,

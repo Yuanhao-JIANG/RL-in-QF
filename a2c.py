@@ -6,7 +6,6 @@ from argparse import Namespace
 import pandas as pd
 import env
 from model_utils import Actor, Critic
-from data_utils import rollout_a2c
 
 
 # train method
@@ -23,26 +22,6 @@ def a2c(environment, hp):
     actor.train()
     critic.train()
     for i in range(hp.num_itr):
-        # ======================================= update network per batch ============================================
-        # _, batch_log_probs, advantages, discounted_advantages, values, price_mean, moving_avg_reward = \
-        #     rollout_a2c(environment, actor, critic, hp)
-        #
-        # advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
-        # discounted_advantages = \
-        #     (discounted_advantages - discounted_advantages.mean()) / (discounted_advantages.std() + 1e-10)
-        # critic_loss_mean = (- advantages * values).mean()
-        # actor_loss_mean = (- discounted_advantages * batch_log_probs).mean()
-        #
-        # actor_optimizer.zero_grad()
-        # actor_loss_mean.backward()
-        # actor_optimizer.step()
-        #
-        # critic_optimizer.zero_grad()
-        # critic_loss_mean.backward()
-        # critic_optimizer.step()
-        # =============================================================================================================
-
-        # ======================================= update network per step =============================================
         moving_avg_reward = 0
         price_mean = 0
         actor_loss_mean = 0
@@ -79,7 +58,6 @@ def a2c(environment, hp):
         actor_loss_mean = actor_loss_mean / hp.episode_size
         moving_avg_reward = moving_avg_reward / hp.episode_size
         price_mean = price_mean / hp.episode_size
-        # =============================================================================================================
 
         if i % 5 == 0:
             sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
@@ -99,9 +77,7 @@ hyperparameter = Namespace(
     critic_lr=3e-4,
     gamma=0.99,
     num_itr=3000,
-    batch_num=1,
     episode_size=300,
-    moving_avg_num=300,
     num_state_features=21,
     price_min=200,
     price_max=2000,

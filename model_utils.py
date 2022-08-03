@@ -1,13 +1,6 @@
-import torch
 import torch.nn as nn
 from torch.distributions import Categorical
 from torch.autograd import Variable
-
-
-def init_weights(m):
-    if isinstance(m, nn.Linear):
-        torch.nn.init.xavier_uniform_(m.weight)
-        m.bias.data.fill_(0.1)
 
 
 # actor network
@@ -21,9 +14,7 @@ class Actor(nn.Module):
             nn.ReLU(),
             nn.Linear(128, int(out_dim)),
             nn.Threshold(.1, .1),
-            # nn.Softmax(dim=0),
         )
-        # self.net.apply(init_weights)
 
     def forward(self, state):
         state = Variable(state.float())
@@ -42,7 +33,6 @@ class Critic(nn.Module):
             nn.ReLU(),
             nn.Linear(128, 1)
         )
-        # self.net.apply(init_weights)
 
     def forward(self, state):
         state = Variable(state.float())
