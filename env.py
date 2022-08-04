@@ -6,22 +6,26 @@ import data_utils
 class Env:
     def __init__(self, glm):
         self.glm = glm
+        # dataframe that records all customers information so far, unless reset
         self.df = None
+        # current customer being promoted
         self.current_customer = None
+        # current state fed or to be fed to the network
         self.state = None
+        # current customer being promoted, of type pandas dataframe
         self.current_customer_df = None
 
         cols = ['gender', 'age', 'car_cost', 'miles', 'brand']
         for i in range(10):
             cols.append(f'rand_feature_{i}')
         cols.append('level')
-
         cols.append('price')
         cols.append('response')
         cols.append('profit')
         cols.append('group')
         self.cols = cols
 
+    # generate new customer
     def get_new(self):
         self.current_customer = data_utils.generate_customer()
         # groups:
@@ -34,17 +38,16 @@ class Env:
         self.current_customer_df = pd.DataFrame(data=customer, columns=self.cols)
 
     def reset(self):
+        self.df = pd.DataFrame(columns=self.cols)
         self.get_new()
         # append average_profit, portion, variance
         self.state = np.concatenate((self.current_customer[:-1], [self.current_customer[-1] == 0,
                                                                   self.current_customer[-1] == 0,
                                                                   self.current_customer[-1] == 0], [0, 0, 0]))
-        self.df = pd.DataFrame(columns=self.cols)
         return self.state
 
     def g(self):
         return 0
-        # return self.current_customer[2]/60
 
     def h(self, var):
         return np.sqrt(var)/2
@@ -78,7 +81,7 @@ class Env:
         return pf*(1 - self.h(var)), self.state
 
 
-# group buyers percentage, there are 4 groups
+# variance of group buyers percentage, there are 4 groups
 def count_var(df):
     p = np.zeros(4)
     group_p = df.groupby('group').mean()['response']

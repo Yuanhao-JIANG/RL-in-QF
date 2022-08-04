@@ -3,7 +3,6 @@ from torch.distributions import Categorical
 from torch.autograd import Variable
 
 
-# actor network
 class Actor(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(Actor, self).__init__()
@@ -13,7 +12,7 @@ class Actor(nn.Module):
             nn.Linear(128, 128),
             nn.ReLU(),
             nn.Linear(128, int(out_dim)),
-            nn.Threshold(.1, .1),
+            nn.Threshold(.1, .1)
         )
 
     def forward(self, state):
@@ -22,7 +21,6 @@ class Actor(nn.Module):
         return policy_distro
 
 
-# critic network
 class Critic(nn.Module):
     def __init__(self, in_dim):
         super(Critic, self).__init__()
