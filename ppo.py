@@ -1,7 +1,6 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-import sys
 import statsmodels.api as sm
 from argparse import Namespace
 import pandas as pd
@@ -83,9 +82,8 @@ def ppo(environment, hp):
             critic_loss.backward()
             critic_optimizer.step()
 
-        sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                         .format(i, price_mean, moving_avg_reward))
-        print(f'actor_loss: {actor_loss}, critic_loss: {critic_loss}')
+        print(f'Iteration: {i:3d}, price_mean: {price_mean:7.2f}, moving average reward: {moving_avg_reward: 7.3f}, '
+              f'actor_loss: {actor_loss: .9f}, critic_loss: {critic_loss: .2f}')
         moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model

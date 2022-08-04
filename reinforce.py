@@ -1,5 +1,4 @@
 import torch
-import sys
 import torch.optim as optim
 import statsmodels.api as sm
 import env
@@ -55,14 +54,13 @@ def reinforce(environment, hp):
             actor_loss.backward()
             actor_optimizer.step()
 
-        actor_loss_mean = actor_loss_mean / hp.episode_size
+        actor_loss_mean = (actor_loss_mean / hp.episode_size).item()
         price_mean = hp.price_min + (sum(ep_actions) / len(ep_actions)) * hp.price_binwidth
         moving_avg_reward = moving_avg_reward / hp.episode_size
 
         if i % 5 == 0:
-            sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                             .format(i, price_mean, moving_avg_reward))
-            print(f'actor_loss: {actor_loss_mean}')
+            print(f'Iteration: {i:3d}, price_mean: {price_mean:7.2f}, moving average reward: {moving_avg_reward: 7.3f},'
+                  f' actor_loss: {actor_loss_mean: .9f}')
             moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model

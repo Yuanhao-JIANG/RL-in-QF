@@ -1,5 +1,4 @@
 import torch
-import sys
 import torch.optim as optim
 import statsmodels.api as sm
 from argparse import Namespace
@@ -54,15 +53,14 @@ def a2c(environment, hp):
             moving_avg_reward += r
             price_mean += price
 
-        critic_loss_mean = critic_loss_mean / hp.episode_size
-        actor_loss_mean = actor_loss_mean / hp.episode_size
+        critic_loss_mean = (critic_loss_mean / hp.episode_size).item()
+        actor_loss_mean = (actor_loss_mean / hp.episode_size).item()
         moving_avg_reward = moving_avg_reward / hp.episode_size
         price_mean = price_mean / hp.episode_size
 
         if i % 5 == 0:
-            sys.stdout.write("Iteration: {}, price_mean: {}, moving average reward: {}\n"
-                             .format(i, price_mean, moving_avg_reward))
-            print(f'actor_loss: {actor_loss_mean.item()}, critic_loss: {critic_loss_mean.item()}')
+            print(f'Iteration: {i:3d}, price_mean: {price_mean:7.2f}, moving average reward: {moving_avg_reward: 7.3f},'
+                  f' actor_loss: {actor_loss_mean: .7f}, critic_loss: {critic_loss_mean: .5f}')
             moving_avg_reward_pool.append(moving_avg_reward)
 
     # save training result to csv file, and save the model
