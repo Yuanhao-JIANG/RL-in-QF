@@ -93,26 +93,25 @@ def ppo(environment, hp):
     torch.save(critic.state_dict(), hp.critic_save_path)
 
 
-hyperparameter = Namespace(
-    actor_lr=3e-4,
-    critic_lr=3e-4,
-    gamma=0.99,
-    num_itr=600,
-    batch_size=5,
-    episode_size=300,
-    num_updates_per_itr=5,
-    num_state_features=21,
-    price_min=200,
-    price_max=2000,
-    price_binwidth=15,
-    clip=0.5,
-    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    actor_save_path='./data/ppo_actor.pth',
-    critic_save_path='./data/ppo_critic.pth',
-    csv_out_path='./data/ppo_out.csv'
-)
-glm = sm.load('./data/glm.model')
-env_train = env.Env(glm)
-ppo(env_train, hyperparameter)
-# while True:
-#     ppo(env_train, hyperparameter)
+def train_ppo():
+    hyperparameter = Namespace(
+        actor_lr=3e-4,
+        critic_lr=3e-4,
+        gamma=0.99,
+        num_itr=600,
+        batch_size=5,
+        episode_size=300,
+        num_updates_per_itr=5,
+        num_state_features=21,
+        price_min=200,
+        price_max=2000,
+        price_binwidth=15,
+        clip=0.5,
+        device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+        actor_save_path='./data/ppo_actor.pth',
+        critic_save_path='./data/ppo_critic.pth',
+        csv_out_path='./data/ppo_out.csv'
+    )
+    glm = sm.load('./data/glm.model')
+    env_train = env.Env(glm)
+    ppo(env_train, hyperparameter)

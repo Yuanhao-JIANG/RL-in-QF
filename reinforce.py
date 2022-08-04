@@ -69,21 +69,20 @@ def reinforce(environment, hp):
     torch.save(actor.state_dict(), hp.actor_save_path)
 
 
-hyperparameter = Namespace(
-    actor_lr=3e-4,
-    gamma=0.99,
-    num_itr=3000,
-    episode_size=300,
-    num_state_features=21,
-    price_min=200,
-    price_max=2000,
-    price_binwidth=15,
-    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    actor_save_path='./data/reinforce_actor.pth',
-    csv_out_path='./data/reinforce_out.csv'
-)
-glm = sm.load('./data/glm.model')
-env_train = env.Env(glm)
-reinforce(env_train, hyperparameter)
-# while True:
-#     reinforce(env_train, hyperparameter)
+def train_reinforce():
+    hyperparameter = Namespace(
+        actor_lr=3e-4,
+        gamma=0.99,
+        num_itr=3000,
+        episode_size=300,
+        num_state_features=21,
+        price_min=200,
+        price_max=2000,
+        price_binwidth=15,
+        device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+        actor_save_path='./data/reinforce_actor.pth',
+        csv_out_path='./data/reinforce_out.csv'
+    )
+    glm = sm.load('./data/glm.model')
+    env_train = env.Env(glm)
+    reinforce(env_train, hyperparameter)

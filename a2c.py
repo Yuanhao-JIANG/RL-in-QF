@@ -70,23 +70,22 @@ def a2c(environment, hp):
     torch.save(critic.state_dict(), hp.critic_save_path)
 
 
-hyperparameter = Namespace(
-    actor_lr=3e-4,
-    critic_lr=3e-4,
-    gamma=0.99,
-    num_itr=3000,
-    episode_size=300,
-    num_state_features=21,
-    price_min=200,
-    price_max=2000,
-    price_binwidth=15,
-    device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
-    actor_save_path='./data/a2c_actor.pth',
-    critic_save_path='./data/a2c_critic.pth',
-    csv_out_path='./data/a2c_out.csv'
-)
-glm = sm.load('./data/glm.model')
-env_train = env.Env(glm)
-a2c(env_train, hyperparameter)
-# while True:
-#     a2c(env_train, hyperparameter)
+def train_a2c():
+    hyperparameter = Namespace(
+        actor_lr=3e-4,
+        critic_lr=3e-4,
+        gamma=0.99,
+        num_itr=3000,
+        episode_size=300,
+        num_state_features=21,
+        price_min=200,
+        price_max=2000,
+        price_binwidth=15,
+        device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
+        actor_save_path='./data/a2c_actor.pth',
+        critic_save_path='./data/a2c_critic.pth',
+        csv_out_path='./data/a2c_out.csv'
+    )
+    glm = sm.load('./data/glm.model')
+    env_train = env.Env(glm)
+    a2c(env_train, hyperparameter)
