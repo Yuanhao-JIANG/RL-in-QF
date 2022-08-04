@@ -23,8 +23,8 @@ def ppo(environment, hp):
     critic.train()
     for i in range(hp.num_itr):
         # collect set of trajectories
-        price_mean = 0
         batch_states = []
+        batch_actions = []
         batch_log_probs = []
         batch_returns = []
         for _ in range(hp.batch_size):
@@ -44,14 +44,15 @@ def ppo(environment, hp):
                 r, state = environment.step(price.item())
                 state = torch.from_numpy(state).to(hp.device)
 
-                ep_returns.append(r)
-                price_mean += price
+                batch_actions.append(action)
                 batch_log_probs.append(log_prob)
+                ep_returns.append(r)
             batch_returns.append(ep_returns)
-            moving_avg_reward = sum(ep_returns) / len(ep_returns)
-            price_mean = price_mean / hp.episode_size
-        batch_states = torch.stack(batch_states).to(hp.device)
-        batch_log_probs = torch.stack(batch_log_probs).to(hp.device).detach()
+        moving_avg_reward = sum(batch_returns[-1]) / len(batch_returns[-1])
+        price_mean = hp.price_min + (sum(batch_actions[-hp.episode_size:]) / hp.episode_size) * hp.price_binwidth
+        batch_states = torch.stack(batch_states)
+        batch_actions = torch.stack(batch_actions)
+        batch_log_probs = torch.stack(batch_log_probs).detach()
 
         # compute returns and advantages
         for e in reversed(range(len(batch_returns))):
@@ -65,8 +66,7 @@ def ppo(environment, hp):
         # update network
         for _ in range(hp.num_updates_per_itr):
             policy_distros = actor.forward(batch_states)
-            actions = policy_distros.sample()
-            curr_log_probs = policy_distros.log_prob(actions)
+            curr_log_probs = policy_distros.log_prob(batch_actions)
             values = critic.forward(batch_states)
 
             ratios = torch.exp(curr_log_probs - batch_log_probs)
@@ -97,7 +97,7 @@ def ppo(environment, hp):
 
 hyperparameter = Namespace(
     actor_lr=3e-4,
-    critic_lr=1e-3,
+    critic_lr=3e-4,
     gamma=0.99,
     num_itr=600,
     batch_size=5,
@@ -107,7 +107,7 @@ hyperparameter = Namespace(
     price_min=200,
     price_max=2000,
     price_binwidth=15,
-    clip=0.2,
+    clip=0.5,
     device=torch.device('cuda:0' if torch.cuda.is_available() else 'cpu'),
     actor_save_path='./data/ppo_actor.pth',
     critic_save_path='./data/ppo_critic.pth',
