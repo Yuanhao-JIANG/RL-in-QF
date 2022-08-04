@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 from scipy import stats
+import matplotlib.pyplot as plt
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
 
@@ -141,6 +142,15 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
     return glm_fit
 
 
-# df = generate_dataframe(data_size=10000, save=True, path='./data/dataframe_fit.csv', seed=0)
-# glm = fit_glm(save=True)
-# print(glm.summary())
+def plot_csv(models, indices):
+    dfs = [pd.read_csv('data/' + model + '_out.csv', header=None) for model in models]
+    fig, axs = plt.subplots(len(models), figsize=(10, len(models) * 4))
+    fig.supxlabel('Iteration')
+    fig.supylabel('Moving Average Reward')
+    ys = [dfs[i].iloc[indices[i]] for i in range(len(models))]
+    xs = [range(len(y)) for y in ys]
+    for i in range(len(axs)):
+        axs[i].set_title('Moving Average Reward with ' + models[i])
+        axs[i].plot(xs[i], ys[i])
+    plt.tight_layout()
+    plt.show()
