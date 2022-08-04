@@ -56,7 +56,7 @@ def reinforce(environment, hp):
             actor_optimizer.step()
 
         actor_loss_mean = actor_loss_mean / hp.episode_size
-        price_mean = hp.price_min + (sum(ep_actions) / len(ep_returns)) * hp.price_binwidth
+        price_mean = hp.price_min + (sum(ep_actions) / len(ep_actions)) * hp.price_binwidth
         moving_avg_reward = moving_avg_reward / hp.episode_size
 
         if i % 5 == 0:
