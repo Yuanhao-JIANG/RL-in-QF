@@ -7,17 +7,15 @@ import env
 from model_utils import Actor, Critic
 
 
-# train method
 def a2c(environment, hp):
+    moving_avg_reward_pool = []
+
     actor, critic = \
         Actor(hp.num_state_features, (hp.price_max - hp.price_min) / hp.price_binwidth), Critic(hp.num_state_features)
     actor_optimizer, critic_optimizer = \
         optim.Adam(actor.parameters(), lr=hp.actor_lr), optim.Adam(critic.parameters(), lr=hp.critic_lr)
 
     actor, critic = actor.to(hp.device), critic.to(hp.device)
-
-    moving_avg_reward_pool = []
-
     actor.train()
     critic.train()
     for i in range(hp.num_itr):
@@ -25,18 +23,24 @@ def a2c(environment, hp):
         price_mean = 0
         actor_loss_mean = 0
         critic_loss_mean = 0
+
+        # run a trajectory
         state = torch.from_numpy(environment.reset()).to(hp.device)
         for step in range(hp.episode_size):
+            # get policy distribution and value for current state, compute price and log probability
             policy_distro = actor.forward(state)
             action = policy_distro.sample()
             log_prob = policy_distro.log_prob(action)
             price = hp.price_min + action * hp.price_binwidth
             v = critic.forward(state)
 
+            # step to next state, get reward and value for next state, then compute advantage
             r, state = environment.step(price.item())
             state = torch.from_numpy(state).to(hp.device)
             v_next = critic.forward(state)
             advantage = (r + hp.gamma * v_next - v).detach()
+
+            # compute loss for actor and critic, update parameters accordingly
             actor_loss = - (hp.gamma ** step) * advantage * log_prob
             critic_loss = - advantage * v
             actor_loss_mean += actor_loss
@@ -45,7 +49,6 @@ def a2c(environment, hp):
             actor_optimizer.zero_grad()
             actor_loss.backward()
             actor_optimizer.step()
-
             critic_optimizer.zero_grad()
             critic_loss.backward()
             critic_optimizer.step()
