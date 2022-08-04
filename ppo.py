@@ -9,15 +9,14 @@ from model_utils import Actor, Critic
 
 
 def ppo(environment, hp):
+    moving_avg_reward_pool = []
+
     actor, critic = \
         Actor(hp.num_state_features, (hp.price_max - hp.price_min) / hp.price_binwidth), Critic(hp.num_state_features)
     actor_optimizer, critic_optimizer = \
         optim.Adam(actor.parameters(), lr=hp.actor_lr), optim.Adam(critic.parameters(), lr=hp.critic_lr)
 
     actor, critic = actor.to(hp.device), critic.to(hp.device)
-
-    moving_avg_reward_pool = []
-
     actor.train()
     critic.train()
     for i in range(hp.num_itr):
@@ -33,13 +32,13 @@ def ppo(environment, hp):
             for _ in range(hp.episode_size):
                 batch_states.append(state)
 
-                # compute action by current policy
+                # get policy distribution for current state, compute action, price, and log probability
                 policy_distro = actor.forward(state)
                 action = policy_distro.sample()
                 log_prob = policy_distro.log_prob(action)
                 price = hp.price_min + action * hp.price_binwidth
 
-                # compute reward and go to next state
+                # get reward and step to next state
                 r, state = environment.step(price.item())
                 state = torch.from_numpy(state).to(hp.device)
 
@@ -60,6 +59,7 @@ def ppo(environment, hp):
         batch_returns = torch.flatten(torch.tensor(batch_returns, dtype=torch.float)).to(hp.device)
         values = critic(batch_states)
         advantages = (batch_returns - values.squeeze()).detach()
+        # normalize advantages
         advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-10)
 
         # update network
@@ -77,7 +77,6 @@ def ppo(environment, hp):
             actor_optimizer.zero_grad()
             actor_loss.backward()
             actor_optimizer.step()
-
             critic_optimizer.zero_grad()
             critic_loss.backward()
             critic_optimizer.step()

@@ -8,13 +8,12 @@ from model_utils import Actor
 
 
 def reinforce(environment, hp):
+    moving_avg_reward_pool = []
+
     actor = Actor(hp.num_state_features, (hp.price_max - hp.price_min) / hp.price_binwidth)
     actor_optimizer = optim.Adam(actor.parameters(), lr=hp.actor_lr)
 
     actor = actor.to(hp.device)
-
-    moving_avg_reward_pool = []
-
     actor.train()
     for i in range(hp.num_itr):
         moving_avg_reward = 0
@@ -22,14 +21,17 @@ def reinforce(environment, hp):
         ep_actions = []
         ep_returns = []
         actor_loss_mean = 0
+
         # run a trajectory
         state = torch.from_numpy(environment.reset()).to(hp.device)
         for step in range(hp.episode_size):
+            # get policy distribution for current state, compute price
             ep_states.append(state)
             policy_distro = actor.forward(state)
             action = policy_distro.sample()
             price = hp.price_min + action * hp.price_binwidth
 
+            # get reward and step to next state
             r, state = environment.step(price.item())
             state = torch.from_numpy(state).to(hp.device)
 
@@ -41,6 +43,7 @@ def reinforce(environment, hp):
         for t in reversed(range(len(ep_returns) - 1)):
             ep_returns[t] += hp.gamma * ep_returns[t + 1]
         ep_returns = torch.tensor(ep_returns, dtype=torch.float)
+        # normalize returns
         ep_returns = (ep_returns - ep_returns.mean()) / (ep_returns.std(dim=0) + 1e-10)
 
         # update policy network

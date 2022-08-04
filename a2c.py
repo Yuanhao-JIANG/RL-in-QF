@@ -34,7 +34,7 @@ def a2c(environment, hp):
             price = hp.price_min + action * hp.price_binwidth
             v = critic.forward(state)
 
-            # step to next state, get reward and value for next state, then compute advantage
+            # get reward, step to next state and get value for next state, then compute advantage
             r, state = environment.step(price.item())
             state = torch.from_numpy(state).to(hp.device)
             v_next = critic.forward(state)
