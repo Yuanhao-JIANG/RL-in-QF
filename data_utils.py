@@ -131,10 +131,9 @@ def generate_dataframe(data_size, save=False, path='./data/dataframe.csv', seed=
 
 def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm.model'):
     df_fit = pd.read_csv(fit_df_path)
-    formula = 'response ~ gender'
-    for i in range(len(df_fit.columns) - 2):
-        formula += f' + {df_fit.columns[i + 1]}'
-
+    formula = 'response ~ gender + age + car_cost + miles + brand + rand_feature_0 + rand_feature_1 ' \
+              '+ rand_feature_2 + rand_feature_3 + rand_feature_4 + rand_feature_5 + rand_feature_6 ' \
+              '+ rand_feature_7 + rand_feature_8 + rand_feature_9 + level + price'
     glm_raw = smf.glm(formula=formula, data=df_fit, family=sm.families.Binomial())
     glm_fit = glm_raw.fit()
     if save:
@@ -142,8 +141,9 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
     return glm_fit
 
 
-def plot_csv(models, indices):
-    dfs = [pd.read_csv('data/' + model + '_out.csv', header=None) for model in models]
+def plot_csv(models, indices, csv_paths=None):
+    dfs = [pd.read_csv('data/' + model + '_out.csv', header=None) for model in models] if not csv_paths \
+        else [pd.read_csv(csv_path) for csv_path in csv_paths]
     fig, axs = plt.subplots(len(models), figsize=(10, len(models) * 4))
     fig.supxlabel('Iteration')
     fig.supylabel('Moving Average Reward')
