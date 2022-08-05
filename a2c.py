@@ -92,3 +92,6 @@ def train_a2c():
     glm = sm.load('./data/glm.model')
     env_train = env.Env(glm)
     a2c(env_train, hyperparameter)
+
+
+# train_a2c()

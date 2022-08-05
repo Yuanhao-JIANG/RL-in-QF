@@ -89,3 +89,6 @@ def train_reinforce():
     glm = sm.load('./data/glm.model')
     env_train = env.Env(glm)
     reinforce(env_train, hyperparameter)
+
+
+# train_reinforce()

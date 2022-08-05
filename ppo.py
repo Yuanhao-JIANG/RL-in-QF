@@ -114,3 +114,6 @@ def train_ppo():
     glm = sm.load('./data/glm.model')
     env_train = env.Env(glm)
     ppo(env_train, hyperparameter)
+
+
+# train_ppo()
