@@ -6,7 +6,7 @@ from data_utils import generate_dataframe, fit_glm, plot_csv
 # print(glm.summary())
 
 # plot the result
-# plot_csv(models=['a2c']*6, indices=range(6))
+# plot_csv(models=['a2c'], indices=[5], save_path='./data/a2c_out.png')
 # plot_csv(models=['reinforce']*6, indices=range(6))
 # plot_csv(models=['ppo']*6, indices=range(6))
-# plot_csv(models=['a2c', 'reinforce', 'ppo'], indices=[5, 5, 5])
+# plot_csv(models=['a2c', 'reinforce', 'ppo'], indices=[5, 5, 5], save_path='./data/out.png')
