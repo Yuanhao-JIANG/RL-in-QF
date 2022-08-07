@@ -441,7 +441,7 @@ have built in previous sections, to solve the problem:
     \State Reset the environment
     \State Generate an \(x\) (first customer of the episode)
     \State Initialize \(S\) (first state of the episode)
-    \Loop \hspace{0.3mm} (for each time step \(t\), \(T\) in total)
+    \For{\(t=0, 1, ..., T\)}
         \State \(c\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(c\), observe \(S'\), \(R\) from environment
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
@@ -451,7 +451,7 @@ have built in previous sections, to solve the problem:
         + \alpha_{\bm{\theta}}\gamma^{t}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
         \State \(S \gets S'\)
-    \EndLoop
+    \EndFor
 \EndLoop
 \end{algorithmic}
 \end{algorithm}
@@ -502,7 +502,7 @@ and stays quite stable afterwards.
 \section{Actor-Critic, Reinforce, and PPO}
 To further show how Actor-Critic algorithm performs, we compare it to another
 two popular algorithms: Reinforce and PPO. Below are pseudocodes for the two
-algorithms.
+algorithms:
 \begin{algorithm}[H]
 \caption{Reinforce for our financial problem}
 \begin{algorithmic}[1]
@@ -511,13 +511,13 @@ algorithms.
 \State Step sizes \(\alpha_{\bm{\theta}}>0\)
 \Loop \hspace{0.3mm} (for each episode)
     \State Reset the environment
-    \State Generate an episode \(S_0, A_0, R_1, ..., S_{T-1}, A_{T-1}, R_T\),
+    \State Generate an episode \(S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\),
     following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}\right)\)
-    \Loop \hspace{0.3mm} (for each time step \(t\), \(T\) in total)
+    \For{\(t=0, 1, ..., T\)}
         \State \(G \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
         \State \(\bm{\theta} \gets \bm{\theta} + \alpha_{\bm{\theta}}\gamma^t
-        G\nabla{\ln{\pi\left(A_t\middle|S_t, \bm{\theta}\right)}}\)
-    \EndLoop
+        G\nabla{\ln{\pi\left(C_t\middle|S_t, \bm{\theta}\right)}}\)
+    \EndFor
 \EndLoop
 \end{algorithmic}
 \end{algorithm}
@@ -530,11 +530,25 @@ algorithms.
 \State Initialize ANN state-value function parameterization
 \(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
 \State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
-\For{\(k=0, 1, 2, ...\)}
+\For{iteration \(k=0, 1, 2, ...\)}
     \State Collect set of trajectories \(\mathcal{D}_k=\{\tau_i\}\), 
-    following \(\pi\left(c\middle|s, \bm{\theta}\right)\)
-    \State Compute discounted returns \(G_k\), the same way as in Reinforce
-    algorithm
+    following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}_k\right)\), where 
+    \(\tau = S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\)
+    \For{\(t=0, 1, ..., T\) in each trajectory \(\tau\) in \(\mathcal{D}_k\)}
+        \State \(G_t \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
+        \State \(A_t \gets G_t - \hat{v}(S_t)\)
+    \EndFor
+    \Loop \hspace{0.3mm} (update multiple times)
+    \State \(\bm{\theta} \gets \underset{\bm{\theta}}{\text{arg\:max}}
+    \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T} 
+    \min{\left(
+            \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
+            {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t, g(\epsilon, A_t)
+    \right)}\)
+    \State \(\bm{w} \gets \underset{\bm{w}}{\text{arg\:min}}
+    \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T} 
+    \Bigl(\hat{v}(S_t, \bm{w})-G_t\Bigr)^2\)
+    \EndLoop
 \EndFor
 \end{algorithmic}
 \end{algorithm}

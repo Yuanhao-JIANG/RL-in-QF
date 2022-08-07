@@ -30,12 +30,12 @@ silent! normal! zE
 425,489fold
 490,501fold
 let &fdl = &fdl
-let s:l = 528 - ((103 * winheight(0) + 22) / 44)
+let s:l = 551 - ((178 * winheight(0) + 30) / 60)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
-keepjumps 528
-normal! 013|
+keepjumps 551
+normal! 012|
 let &g:so = s:so_save | let &g:siso = s:siso_save
 doautoall SessionLoadPost
 " vim: set ft=vim :
