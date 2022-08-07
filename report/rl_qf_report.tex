@@ -1,14 +1,15 @@
 \documentclass[11pt]{article}
 \usepackage{amsmath, amsfonts, bm, listings, enumitem, geometry, titlesec,
-array, makecell, caption, graphicx, float, algorithm, algpseudocode}
+array, makecell, caption, graphicx, float, algorithm, algpseudocode, siunitx}
 \usepackage[table]{xcolor}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta}
 \usepackage{hyperref}
 \geometry{margin=0.8in}
-\graphicspath{ {./imgs/} }
-%\renewcommand{\familydefault}{\sfdefault}
+\graphicspath{ {../data/} }
 
+%\renewcommand{\familydefault}{\sfdefault}
+%\sisetup{output-exponent-marker=\ensuremath{\mathrm{e}}}
 \tikzstyle{process} = [rectangle, minimum width=2cm, minimum height=1.3cm, 
 text centered, draw=black]
 \tikzstyle{arrow} = [thick,->,>={Stealth[scale=1.1]}]
@@ -422,13 +423,14 @@ which makes sure that
 \end{enumerate}
 
 \section{RL with Actor-Critic}
+\subsection{The Algorithm}
 In this project, we consider the episodic learning procedure, where each 
-episode has finite time steps, \(N\), to be specified as a constant, and we 
+episode has finite time steps, \(T\), to be specified as a constant, and we 
 will also reset the environment at the start of each episode. The algorithm 
 below is to use RL, with actor-critic method, and with the help of what we 
 have built in previous sections, to solve the problem:
 \begin{algorithm}[H]
-\caption{RL-Actor-Critic-for-financial-problem}
+\caption{Actor-Critic for our financial problem}
 \begin{algorithmic}[1]
 \State Initialize ANN policy parameterization 
 \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
@@ -439,14 +441,14 @@ have built in previous sections, to solve the problem:
     \State Reset the environment
     \State Generate an \(x\) (first customer of the episode)
     \State Initialize \(S\) (first state of the episode)
-    \Loop \hspace{0.3mm} (for each time step \(i\), \(N\) in total)
+    \Loop \hspace{0.3mm} (for each time step \(t\), \(T\) in total)
         \State \(c\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(c\), observe \(S'\), \(R\) from environment
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
         \State \(\bm{w} \gets \bm{w} + 
         \alpha_{\bm{w}} \delta\nabla\hat{v}(S,\bm{w})\)
         \State \(\bm{\theta} \gets \bm{\theta} 
-        + \alpha_{\bm{\theta}}\gamma^{i}\delta
+        + \alpha_{\bm{\theta}}\gamma^{t}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
         \State \(S \gets S'\)
     \EndLoop
@@ -484,5 +486,58 @@ have built in previous sections, to solve the problem:
         \draw [dashed, thick] (-3,-6.5) -- (-3,-7.8);
     \end{tikzpicture}
 \end{center}
+
+\subsection{Training Result}
+The following graph shows the training result of the above algorithm (300
+moving average reward vs iteration), with 600 iterations (5 episodes per 
+iteration), \(T=300\), \(\gamma=0.99\), 
+\(\alpha_\theta=\alpha_{\bm{w}}=\num{3e-4}\).
+\begin{center}
+    \includegraphics[scale=0.67]{a2c_out}
+\end{center}
+The graph shows that the moving average reward converges within only 50 
+iterations, that is, 250 episode, 75000 parameter updates for each network, 
+and stays quite stable afterwards.
+
+\section{Actor-Critic, Reinforce, and PPO}
+To further show how Actor-Critic algorithm performs, we compare it to another
+two popular algorithms: Reinforce and PPO. Below are pseudocodes for the two
+algorithms.
+\begin{algorithm}[H]
+\caption{Reinforce for our financial problem}
+\begin{algorithmic}[1]
+\State Initialize ANN policy parameterization 
+\(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
+\State Step sizes \(\alpha_{\bm{\theta}}>0\)
+\Loop \hspace{0.3mm} (for each episode)
+    \State Reset the environment
+    \State Generate an episode \(S_0, A_0, R_1, ..., S_{T-1}, A_{T-1}, R_T\),
+    following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}\right)\)
+    \Loop \hspace{0.3mm} (for each time step \(t\), \(T\) in total)
+        \State \(G \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
+        \State \(\bm{\theta} \gets \bm{\theta} + \alpha_{\bm{\theta}}\gamma^t
+        G\nabla{\ln{\pi\left(A_t\middle|S_t, \bm{\theta}\right)}}\)
+    \EndLoop
+\EndLoop
+\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}[H]
+\caption{PPO for our financial problem}
+\begin{algorithmic}[1]
+\State Initialize ANN policy parameterization 
+\(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
+\State Initialize ANN state-value function parameterization
+\(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
+\State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
+\For{\(k=0, 1, 2, ...\)}
+    \State Collect set of trajectories \(\mathcal{D}_k=\{\tau_i\}\), 
+    following \(\pi\left(c\middle|s, \bm{\theta}\right)\)
+    \State Compute discounted returns \(G_k\), the same way as in Reinforce
+    algorithm
+\EndFor
+\end{algorithmic}
+\end{algorithm}
+
 
 \end{document}
