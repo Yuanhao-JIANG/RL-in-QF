@@ -141,7 +141,7 @@ def fit_glm(fit_df_path='./data/dataframe_fit.csv', save=False, path='./data/glm
     return glm_fit
 
 
-def plot_csv(models, indices, csv_paths=None):
+def plot_csv(models, indices, csv_paths=None, save_path=None):
     dfs = [pd.read_csv('data/' + model + '_out.csv', header=None) for model in models] if not csv_paths \
         else [pd.read_csv(csv_path) for csv_path in csv_paths]
     fig, axs = plt.subplots(len(models), figsize=(10, len(models) * 4))
@@ -149,8 +149,14 @@ def plot_csv(models, indices, csv_paths=None):
     fig.supylabel('Moving Average Reward')
     ys = [dfs[i].iloc[indices[i]] for i in range(len(models))]
     xs = [range(len(y)) for y in ys]
-    for i in range(len(axs)):
-        axs[i].set_title('Moving Average Reward with ' + models[i])
-        axs[i].plot(xs[i], ys[i])
+    if len(models) == 1:
+        axs.set_title('Moving Average Reward with ' + models[0])
+        axs.plot(xs[0], ys[0])
+    else:
+        for i in range(len(axs)):
+            axs[i].set_title('Moving Average Reward with ' + models[i])
+            axs[i].plot(xs[i], ys[i])
     plt.tight_layout()
+    if save_path is not None:
+        plt.savefig(save_path)
     plt.show()
