@@ -381,39 +381,45 @@ this project I choose \(h\) to be such that
 \section{Build the model}
 With the environment well built, we now build the model for our policy and the
 value function. In this project we use artificial neuro networks (ANNs) as the 
-parameterized policy and value function, each with four linear layers, and 
+parameterized policy and value function, each with three linear layers, and 
 with the ReLU function as the activation function. And the input of both 
 function is the state, as illustrated below:
 \[S_t\rightarrow\underset{\text{ANN for value function}}{
         \boxed{
-            \underset{n(S)\rightarrow 64}{\text{Linear}}
+            \underset{n(S)\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{64\rightarrow 128}{\text{Linear}}
+            \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 64}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{64\rightarrow 1}{\text{Linear}}
+            \rightarrow\underset{128\rightarrow 1}{\text{Linear}}
         }
 }\rightarrow v_t\]
 \[S_t\rightarrow\underset{\text{ANN for policy function}}{
         \boxed{
             \underset{n(S)\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 256}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{256\rightarrow 512}{\text{Linear}}
+            \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
             \rightarrow\text{ReLU}
             \rightarrow\underset{128\rightarrow n(A)}{\text{Linear}}
+            \rightarrow\underset{(0.1, \: 0.1)}{\text{Threshold}}
         }
-}\rightarrow \text{Log} \rightarrow \text{Softmax}\rightarrow c_t\]
+}\rightarrow \pi_t\rightarrow c_t\]
 where \(n(S)\) denotes the vector length of the state and \(n(A)\) denotes 
 the number of actions. 
-\vspace{3mm}\newline Note that we add a log layer before the Softmax layer 
-when getting the price, which takes the log of all entries of the input vector.
-This shrinks the difference between those entries, so that the output of 
-Softmax layer would be flatter, which means we will have a flatter policy 
-distribution, which is beneficial for training since it increase the 
-exploration for different actions.
+\vspace{3mm}\newline We generate the policy distribution by scoring each 
+action. E.g. denoted the policy function output by \(y\), then the probability 
+of choosing action \(i\) (\(i=0, 1, ..., n(A) - 1\)) is computed by 
+\[P(i)=\frac{y_i}{\sum_{j=0}^{n(A)-1} y_j}\]
+Note that we add a Threshold layer at the end of policy 
+function, which is defined by 
+\[\text{Threshold}(0.1, 0.1)=\text{max}(0.1, x)\]
+which makes sure that 
+\begin{enumerate}
+    \item the probabilities are valid (no negative values, greater score 
+        results in greater probability);
+    \item all actions have the probability to be chosen at early stage, which 
+        is beneficial for training since it increase the exploration for 
+        different actions.
+\end{enumerate}
 
 \section{RL with Actor-Critic}
 In this project, we consider the episodic learning procedure, where each 
