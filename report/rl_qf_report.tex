@@ -500,6 +500,7 @@ iterations, that is, 250 episode, 75000 parameter updates for each network,
 and stays quite stable afterwards.
 
 \section{Actor-Critic, Reinforce, and PPO}
+\subsection{Algorithms}
 To further show how Actor-Critic algorithm performs, we compare it to another
 two popular algorithms: Reinforce and PPO. Below are pseudocodes for the two
 algorithms:
@@ -543,7 +544,12 @@ algorithms:
     \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T} 
     \min{\left(
             \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
-            {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t, g(\epsilon, A_t)
+            {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t,
+            \text{clip}\left(
+                \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
+                {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)},
+                1-\epsilon, 1+\epsilon
+            \right)A_t
     \right)}\)
     \State \(\bm{w} \gets \underset{\bm{w}}{\text{arg\:min}}
     \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T} 
@@ -552,6 +558,27 @@ algorithms:
 \EndFor
 \end{algorithmic}
 \end{algorithm}
+
+\subsection{Training result}
+To make better comparison, the policy function of the two algorithms
+is implemented the same way as we did in Actor-Critic algorithm, and the same 
+is true for the value function used in PPO method. 
+\vspace{3mm}\newline The following graph shows the training result of these 
+three algorithms (300 moving average reward vs iteration), with 600 iterations
+(5 episodes per iteration), \(T=300\), \(\gamma=0.99\), 
+\(\alpha_\theta=\num{3e-4}\), \(\alpha_{\bm{w}}=\num{3e-10}\) (if applicable),
+\(\epsilon=0.5\) (if applicable).
+\begin{center}
+    \includegraphics[scale=0.67]{out}
+\end{center}
+As is shown in the graph, the Actor-Critic algorithm converges the fastest,
+within 50 iterations, followed by Reinforce algorithm, which converges within
+about 250 iterations, despite a small drop of moving average around iteration 
+300, which is quickly corrected by the algorithm within 50 iterations. PPO 
+algorithm converges the slowest, with about 300 iterations. Despite of the 
+speed of convergence, the moving average rewards of convergence for these 
+three algorithms are nearly the same (around 400), this is as expected.
+
 
 
 \end{document}
