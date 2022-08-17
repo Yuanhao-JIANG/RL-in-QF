@@ -1,0 +1,8 @@
+*
+!.gitignore
+!*.view
+!*.tex
+!*.cls
+!*.bib
+!*.bst
+!*.pdf
