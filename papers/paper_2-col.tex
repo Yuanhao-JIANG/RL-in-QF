@@ -166,19 +166,15 @@
 
 %%%%%  End of fields to be completed. Now write your paper. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-
 %%%%%  ABSTRACT  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Abstract should be 200 words or less
 \begin{abstract}
-
-This paper is an example of and a  {\upshape\LaTeX} template for typesetting ASME conference papers using the {\upshape\texttt{asmeconf}} class. This  {\upshape\LaTeX} template follows ASME guidelines for margins, fonts, headings, captions, and reference formats as of 2022. The class is intended to be used with the {\upshape\texttt{asmeconf.bst} \hologo{BibTeX}} style for reference formatting, which is part of this distribution. The template produces pdfs that contain hyperlinks, bookmarks, and metadata; and references can include the DOI and URL fields. Links may be colored, for online use, or black, for publication. The class enables inline author names, following ASME's current style, but can also produce the traditional grid style. Options include line numbering, final column balancing, various math options, government copyright, and archivability (PDF/A). In addition, section headers may contain mathematics, references, citations, and footnotes. The class is compatible with {\upshape\hologo{pdfLaTeX}} or {\upshape\hologo{LuaLaTeX}}.
+\noindent This paper is an example of and a  {\upshape\LaTeX} template for typesetting ASME conference papers using the {\upshape\texttt{asmeconf}} class. This  {\upshape\LaTeX} template follows ASME guidelines for margins, fonts, headings, captions, and reference formats as of 2022. The class is intended to be used with the {\upshape\texttt{asmeconf.bst} \hologo{BibTeX}} style for reference formatting, which is part of this distribution. The template produces pdfs that contain hyperlinks, bookmarks, and metadata; and references can include the DOI and URL fields. Links may be colored, for online use, or black, for publication. The class enables inline author names, following ASME's current style, but can also produce the traditional grid style. Options include line numbering, final column balancing, various math options, government copyright, and archivability (PDF/A). In addition, section headers may contain mathematics, references, citations, and footnotes. The class is compatible with {\upshape\hologo{pdfLaTeX}} or {\upshape\hologo{LuaLaTeX}}.
 \end{abstract}
 
-%%%%%%%%%  BODY OF PAPER %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 \section{Introduction}
-The object is to use reinforcement learning to solve the following scenario:
+\noindent The object is to use reinforcement learning to solve the following scenario:
 a customer arrives with a number of features, we want to promote the customer
 with a proper price, such that he is most likely to purchase our product, and 
 we also have the highest profit and a better portfolio. 
@@ -191,9 +187,10 @@ response and the portfolio. Then the portfolio updates and a new customer
 arrives.
 
 \section{Reinforcement Learning}
-The reinforcement learning method we want to use is based on the Markov 
-decision process (MDP), as illustrated below:
-\begin{center}
+\noindent The reinforcement learning method we want to use is based on the Markov 
+decision process (MDP), as illustrated in Figure~\ref{fig:MDP-illustration}.
+\begin{figure}
+    \centering
     \begin{tikzpicture}
         \node (agent) [process, minimum width=2cm, minimum height=2cm,
             label={[anchor=north,inner sep=5pt]north:Agent}]{};
@@ -208,14 +205,15 @@ decision process (MDP), as illustrated below:
             {\(S_t\)} (pi);
         \draw [arrow] (env.197) -- ++(-1.5,0) node[anchor=south, xshift=0.8cm]
             {\(R_{t+1}\)} coordinate(a2);
-        \draw [arrow] (a2) -- ++(-1.3,0) -- ++(0,3.2) 
-            -- node[anchor=south, xshift=0.5cm] {\(R_t\)} (agent.154);
+        \draw [arrow] (a2) -- ++(-1.3,0) -- ++(0,3) 
+            -- node[anchor=south, xshift=0.5cm] {\(R_t\)} (agent.159);
         \draw [arrow] (pi) -- ++(2.7,0) node[anchor=south, xshift=-0.8cm] 
             {\(A_t\)} |- (env);
         \draw [dashed,thick] (-2.7,-1.5) -- (-2.7, -3.2);
     \end{tikzpicture}
-    
-\end{center}
+    \caption{MDP Illustration}
+    \label{fig:MDP-illustration}
+\end{figure}
 \noindent However, in RL, the agent is not told which actions to take, but 
 instead must discover which actions yield the most reward by trying them. Our 
 goal at each time step is to find a policy \(\pi\) to maximize the expected 
@@ -226,8 +224,8 @@ To achieve this, we need to evaluate the current policy, and improve it
 accordingly.
 
 \subsection{Policy Evaluation}
-We want to evaluate the value function under a given policy \(\pi\). According 
-to Bellman equation,
+\noindent We want to evaluate the value function under a given policy \(\pi\).
+According to Bellman equation,
 \[v_\pi(s)=\mathbb{E}_\pi\left[R_{t+1}+\gamma v_\pi(S_{t+1})\;\middle|\;
 S_t=s\right]\]
 We can use it to iteratively compute \(v_\pi\). The iteratively update is
@@ -237,8 +235,9 @@ which is proven that it will converge to the true value given any initial value
 function.
 
 \subsection{Policy Improvement}
-Now we have the evaluated value function for the policy, we want to improve it
-accordingly. To do this, we introduce the q-function under policy \(\pi\)
+\noindent Now we have the evaluated value function for the policy, we want to 
+improve it accordingly. To do this, we introduce the q-function under 
+policy \(\pi\)
 \[q_\pi(s, a) = \mathbb{E}\left[R_{t+1} + \gamma v_\pi(S_{t+1})\;\middle|\;
 S_t=s, A_t=a\right]\]
 The policy improvement theorem says that, let \(\pi\) and \(\pi'\) be any pair
@@ -249,8 +248,8 @@ Now we can improve the policy by
 for all \(s\).
 
 \subsection{Policy Iteration}
-By iteratively applying policy evaluation and policy improvement, we can obtain
-a sequence of monotonically improving policies and value functions:
+\noindent By iteratively applying policy evaluation and policy improvement, we
+can obtain a sequence of monotonically improving policies and value functions:
 \[\pi_0 \overset{E}{\longrightarrow} v_{\pi_0} \overset{I}{\longrightarrow}
 \pi_1 \overset{E}{\longrightarrow} v_{\pi_1} \overset{I}{\longrightarrow}
 \dots \overset{I}{\longrightarrow} \pi_* \overset{E}{\longrightarrow} v_*\]
@@ -259,9 +258,9 @@ where \(\overset{E}{\longrightarrow}\) denotes a policy evaluation and
 finding an optimal policy is called policy iteration.
 
 \subsection{Value Iteration}
-One drawback to policy iteration is that each of its iterations involves policy
-evaluation, which itself is a protracted iterative computation requiring
-multiple sweeps through the state set.
+\noindent One drawback to policy iteration is that each of its iterations 
+involves policy evaluation, which itself is a protracted iterative computation
+requiring multiple sweeps through the state set.
 \vspace{3mm}\newline We now truncate the policy evaluation such that it is
 stopped after just one sweep (one update of each state):
 \begin{align*}
@@ -273,19 +272,19 @@ We keep iterate until \(v\) converges (to \(v_*\)), then we record the last
 policy \(\pi(s) = \underset{a}{\text{argmax}}\:q(s, a)\).
 
 \subsection{Generalized Policy Iteration}
-As long as both processes, policy evaluation and policy improvement, continue
-to update all states, the ultimate result is typically the same --- converge to
-the optimal value function and an optimal policy.
+\noindent As long as both processes, policy evaluation and policy improvement,
+continue to update all states, the ultimate result is typically the 
+same --- converge to the optimal value function and an optimal policy.
 \vspace{3mm}\newline Generalized policy iteration (GPI) is used to refer to the
 general idea of letting policy evaluation and policy improvement interact,
 independent of the granularity of the two processes (instead of letting each
 complete before the other begins).
 
 \subsection{Temporal-Difference Learning}
-When we don't have the complete model of the environment, we need to estimate 
-the value function from only experience. There are two methods to do so: 
-Monte Carlo Methods and Temporal-Difference. We will use Temporal-Difference
-method in this project.
+\noindent When we don't have the complete model of the environment, we need to 
+estimate the value function from only experience. There are two methods to do 
+so: Monte Carlo Methods and Temporal-Difference. We will use 
+Temporal-Difference method in this project.
 \vspace{3mm}\newline To estimate \(v_\pi(S_t)\) using only the experience, we 
 take the average on all experienced trajectory' values. Temporal-Difference
 method uses \(G_i = [R_{t+1}]_i+\gamma [v_\pi(S_{t+1})]_i\) to estimate the 
@@ -309,11 +308,12 @@ with \(\alpha\) being the stepsize. And this also applies to the q function:
 [R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]\]
 
 \subsection{Policy Gradient Methods}
-When the state space is arbitrarily large, we cannot find an optimal policy or
-the optimal value function given the limited resources and time. Instead of
-keeping track of the value and the action(s) to select for each state (tabular
-methods), we can use parameterized functions, for example, artificial neural
-networks (ANNs), to approximate the value function and the policy function.
+\noindent When the state space is arbitrarily large, we cannot find an optimal 
+policy or the optimal value function given the limited resources and time. 
+Instead of keeping track of the value and the action(s) to select for each 
+state (tabular methods), we can use parameterized functions, for example, 
+artificial neural networks (ANNs), to approximate the value function and the 
+policy function.
 \vspace{3mm}\newline Previously methods learned the values of actions and then
 select actions based on their estimated action values (q function). Now we
 consider methods that instead learn a parameterized policy that select actions
@@ -413,19 +413,20 @@ take one sample estimate, which gives us the update formula for \(\bm{w}\):
     \Bigr)\nabla \hat{v}(S_t, \bm{w}_t)\\
     &=\bm{w}_t - \alpha_{\bm{w}}\delta_t\nabla \hat{v}(S_t, \bm{w}_t)
 \end{align*}
-The actor-critic method is based on the above updates formulas:
-\begin{algorithm}[H]
-\caption{Actor-Critic}
-\begin{algorithmic}[1]
-\State Input: a differentiable policy parameterization 
-\(\pi\left(a\middle|s, \bm{\theta}\right)\)
-\State Input: a differentiable state-value function parameterization
-\(\hat{v}(s,\bm{w})\)
-\State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
-\State \(\bm{\theta} \gets \bm{0}\), \(\bm{w} \gets \bm{0}\)
-\Loop \hspace{0.3mm} (for each episode)
-    \State Initialize \(S\) (first state of the episode)
-    \Loop \hspace{0.3mm} (for each time step \(i\))
+The actor-critic method is based on the above updates formulas, details are
+shown in Algorithm \ref{algorithm:actor-critic}.
+\begin{algorithm}
+    \caption{Actor-Critic\label{algorithm:actor-critic}}
+    \begin{algorithmic}[1]
+        \State Input: a differentiable policy parameterization 
+        \(\pi\left(a\middle|s, \bm{\theta}\right)\)
+        \State Input: a differentiable state-value function parameterization
+        \(\hat{v}(s,\bm{w})\)
+        \State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
+        \State \(\bm{\theta} \gets \bm{0}\), \(\bm{w} \gets \bm{0}\)
+        \Loop \hspace{0.3mm} (for each episode)
+        \State Initialize \(S\) (first state of the episode)
+        \Loop \hspace{0.3mm} (for each time step \(i\))
         \State \(A\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(A\), observe \(S'\), \(R\)
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
@@ -435,13 +436,13 @@ The actor-critic method is based on the above updates formulas:
         + \alpha_{\bm{\theta}}\gamma^{i}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
         \State \(S \gets S'\)
-    \EndLoop
-\EndLoop
-\end{algorithmic}
+        \EndLoop
+        \EndLoop
+    \end{algorithmic}
 \end{algorithm}
 
 \section{Build the Environment}
-The environment does the following things:
+\noindent The environment does the following things:
 \begin{enumerate}
     \item record the current state that can be queried anytime
     \item when an action, i.e. a price, is given according to the current 
@@ -453,8 +454,8 @@ promotes a price to the customer, the reward is then computed based on the
 profit on this customer and the portfolio up to now.
 
 \subsection{Customer Features}
-A customer' features is represented by an array (or vector), denoted by \(x\) 
-with 16 entries with each generated randomly from a distribution, 
+\noindent A customer's features is represented by an array (or vector), denoted 
+by \(x\) with 16 entries with each generated randomly from a distribution, 
 including normal distribution, binomial distribution, and so on. For example, 
 a feature vector \(x\) is described as Table \ref{tab:1}
 \begin{table*}
@@ -476,9 +477,9 @@ denoted by pf, can be computed by
 where \(g(x)\) is the cost on that customer.
 
 \subsection{Resopnse}
-The resopnse is generated by a generalized linear model, whose input is a 
-vector of a customer features vector \(x\) appended with a price \(c\), i.e.
-\(r=glm(x[0], \dots, x[15], c)\).
+\noindent The resopnse is generated by a generalized linear model, whose input 
+is a vector of a customer features vector \(x\) appended with a price \(c\), 
+i.e. \(r=glm(x[0], \dots, x[15], c)\).
 \vspace{3mm}\newline The GLM used in the project is fitted using a randomly
 generated data set with each observation is a customer's features followed by 
 a price, then followed by a resopnse, as illustrated by Table \ref{tab:2}.
@@ -499,9 +500,9 @@ a price, then followed by a resopnse, as illustrated by Table \ref{tab:2}.
 \vspace{3mm}\noindent And the link function for the GLM is chosen to be the logistic function.
 
 \subsection{State}
-The state at start of each time step is the feature vector of the new customer 
-to promote (might be modified a bit), appended by the portfolio, which is also 
-a data vector consists of the following entries:
+\noindent The state at start of each time step is the feature vector of the 
+new customer to promote (might be modified a bit), appended by the portfolio, 
+which is also a data vector consists of the following entries:
 \begin{itemize}
     \item average profit over all customers so far, expect for the new customer
         at current time step, denoted by avg\_pf (initialized to \(0\)), 
@@ -520,17 +521,16 @@ a data vector consists of the following entries:
         \left(\text{pt}_i-\bar{\text{pt}}\right)^2}{3}\]
         Later we use this to compute reward to 
         make sure the agent will promote to all types of customers instead of 
-        only focusing on one type.
-        \vspace{2mm}\newline Note that \(\text{var}\leq1\).
+        only focusing on one type. Note that \(\text{var}\leq1\).
 \end{itemize}
-In the end, the state \(s\), or \(s_t\) is of the form 
+Thus, the state \(s\), or \(s_t\), end up with the form 
 \(s_t=(x'_t[0],\:\dots,\:x'_t[-1],\:\text{avg\_pf}_t,\:\text{p}_t,
 \:\text{var}_t)\), where \(x'_t\) is the modified \(x_t\), including preprocess
 of converting some categorical data to meaningful data to the model.
 
 \subsection{Reward}
-The reward at each time step \(t\), after the price \(c_t\) is promoted to the 
-customer \(x_t\), denoted by \(R_t\), is calculated by
+\noindent The reward at each time step \(t\), after the price \(c_t\) is 
+promoted to the customer \(x_t\), denoted by \(R_t\), is calculated by
 \[R_t = \text{pf}_t\left(1-h(\text{var}_t)\right)\]
 where \(h\) is a function that indicates how much we care about the variance,
 i.e. how important it is to try to promote to customers of all categories. In
@@ -538,30 +538,34 @@ this project I choose \(h\) to be such that
 \(h(\text{var}) = \sqrt{\text{var}}/2\).
 
 \section{Build the model}
-With the environment well built, we now build the model for our policy and the
-value function. In this project we use artificial neuro networks (ANNs) as the 
-parameterized policy and value function, each with three linear layers, and 
-with the ReLU function as the activation function. And the input of both 
-function is the state, as illustrated below:
-\[S_t\rightarrow\underset{\text{ANN for value function}}{
-        \boxed{
-            \underset{n(S)\rightarrow 128}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 1}{\text{Linear}}
-        }
-}\rightarrow v_t\]
-\[S_t\rightarrow\underset{\text{ANN for policy function}}{
-        \boxed{
-            \underset{n(S)\rightarrow 128}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
-            \rightarrow\text{ReLU}
-            \rightarrow\underset{128\rightarrow n(A)}{\text{Linear}}
-            \rightarrow\underset{(0.1, \: 0.1)}{\text{Threshold}}
-        }
-}\rightarrow \pi_t\rightarrow c_t\]
+\noindent With the environment well built, we now build the model for our 
+policy and the value function. In this project we use artificial neuro networks
+(ANNs) as the parameterized policy and value function, each with three linear 
+layers, and with the ReLU function as the activation function. And the input 
+of both function is the state, as illustrated in Figure~\ref{fig:ANN}.
+\begin{figure*}
+    \centering
+    \[S_t\rightarrow\underset{\text{ANN for value function}}{
+            \boxed{
+                \underset{n(S)\rightarrow 128}{\text{Linear}}
+                \rightarrow\text{ReLU}
+                \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
+                \rightarrow\text{ReLU}
+                \rightarrow\underset{128\rightarrow 1}{\text{Linear}}
+            }
+    }\rightarrow v_t\]
+    \[S_t\rightarrow\underset{\text{ANN for policy function}}{
+            \boxed{
+                \underset{n(S)\rightarrow 128}{\text{Linear}}
+                \rightarrow\text{ReLU}
+                \rightarrow\underset{128\rightarrow 128}{\text{Linear}}
+                \rightarrow\text{ReLU}
+                \rightarrow\underset{128\rightarrow n(A)}{\text{Linear}}
+                \rightarrow\underset{(0.1, \: 0.1)}{\text{Threshold}}
+            }
+    }\rightarrow \pi_t\rightarrow c_t\]
+    \caption{ANN model for policy and value function\label{fig:ANN}}
+\end{figure*}
 where \(n(S)\) denotes the vector length of the state and \(n(A)\) denotes 
 the number of actions. 
 \vspace{3mm}\newline We generate the policy distribution by scoring each 
@@ -581,25 +585,29 @@ which makes sure that
 \end{enumerate}
 
 \section{RL with Actor-Critic}
+\noindent In this project, we consider the episodic learning procedure, where 
+each episode has finite time steps, \(T\), to be specified as a constant, and 
+we will also reset the environment at the start of each episode.
+
 \subsection{The Algorithm}
-In this project, we consider the episodic learning procedure, where each
-episode has finite time steps, \(T\), to be specified as a constant, and we
-will also reset the environment at the start of each episode. The algorithm
-below is to use RL, with actor-critic method, and with the help of what we
-have built in previous sections, to solve the problem:
-\begin{algorithm}[H]
-\caption{Actor-Critic for our financial problem}
-\begin{algorithmic}[1]
-\State Initialize ANN policy parameterization
-\(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
-\State Initialize ANN state-value function parameterization
-\(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
-\State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
-\Loop \hspace{0.3mm} (for each episode)
-    \State Reset the environment
-    \State Generate an \(x\) (first customer of the episode)
-    \State Initialize \(S\) (first state of the episode)
-    \For{\(t=0, 1, ..., T\)}
+\noindent Algorithm \ref{algorithm:actor-critic-fin} uses RL with actor-critic 
+method, and with the help of what we have built in previous sections, to solve 
+the problem.
+\begin{algorithm}
+    \caption{Actor-Critic for our financial problem
+        \label{algorithm:actor-critic-fin}
+    }
+    \begin{algorithmic}[1]
+        \State Initialize ANN policy parameterization
+        \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
+        \State Initialize ANN state-value function parameterization
+        \(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
+        \State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
+        \Loop \hspace{0.3mm} (for each episode)
+        \State Reset the environment
+        \State Generate an \(x\) (first customer of the episode)
+        \State Initialize \(S\) (first state of the episode)
+        \For{\(t=0, 1, ..., T\)}
         \State \(c\sim\pi\left(\cdot\middle|S, \bm{\theta}\right)\)
         \State Take action \(c\), observe \(S'\), \(R\) from environment
         \State \(\delta \gets R + \gamma\hat{v}(S',\bm{w})-\hat{v}(S,\bm{w})\)
@@ -609,13 +617,13 @@ have built in previous sections, to solve the problem:
         + \alpha_{\bm{\theta}}\gamma^{t}\delta
         \nabla\ln{\pi\left(A\middle|S, \bm{\theta}\right)}\)
         \State \(S \gets S'\)
-    \EndFor
-\EndLoop
-\end{algorithmic}
+        \EndFor
+        \EndLoop
+    \end{algorithmic}
 \end{algorithm}
-\noindent The following graph illustrates the algorithm:
-\vspace{5mm}
-\begin{center}
+\noindent Figure~\ref{fig:a2c-illustration} illustrates the algorithm.
+\begin{figure}
+    \centering
     \begin{tikzpicture}[node distance=2cm]
         \node (agent) [process, minimum width=6cm, minimum height=3cm,
             label={[anchor=north east,inner sep=7pt]north east:Agent}]{};
@@ -643,16 +651,19 @@ have built in previous sections, to solve the problem:
         \draw [dashed,arrow] (m4) -- (v);
         \draw [dashed, thick] (-3,-6.5) -- (-3,-7.8);
     \end{tikzpicture}
-\end{center}
+    \caption{Actor-Critic for Finance Algorithm Illustration}
+    \label{fig:a2c-illustration}
+\end{figure}
 
 \subsection{Training Result}
-Figure \ref{fig:1} shows the training result of the above algorithm (300
-moving average reward vs iteration), with 600 iterations (5 episodes per
-iteration), \(T=300\), \(\gamma=0.99\),
-\(\alpha_\theta=\alpha_{\bm{w}}=\num{3e-4}\).
+\noindent Figure~\ref{fig:a2c-out} shows the training result of 
+Algorithm~\ref{algorithm:actor-critic} (300 moving average reward vs 
+iteration), with 600 iterations (5 episodes per iteration), \(T=300\), 
+\(\gamma=0.99\), \(\alpha_\theta=\alpha_{\bm{w}}=\num{3e-4}\).
 \begin{figure*}
-    \centering\includegraphics[scale=0.67]{a2c_out}
-    \caption{Training Result for Algorithm a2c\label{fig:1}}
+    \centering\includegraphics[scale=0.75]{a2c_out}
+    \caption{Training Result for Algorithm a2c}
+    \label{fig:a2c-out}
 \end{figure*}
 The graph shows that the moving average reward converges within only 50
 iterations, that is, 250 episode, 75000 parameter updates for each network,
@@ -660,90 +671,95 @@ and stays quite stable afterwards.
 
 \section{Actor-Critic, Reinforce, and PPO}
 \subsection{Algorithms}
-To further show how Actor-Critic algorithm performs, we compare it to another
-two popular algorithms: Reinforce and PPO. Below are pseudocodes for the two
-algorithms:
-\begin{algorithm}[H]
-\caption{Reinforce for our financial problem}
-\begin{algorithmic}[1]
-\State Initialize ANN policy parameterization
-\(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
-\State Step sizes \(\alpha_{\bm{\theta}}>0\)
-\Loop \hspace{0.3mm} (for each episode)
-    \State Reset the environment
-    \State Generate an episode \(S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\),
-    following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}\right)\)
-    \For{\(t=0, 1, ..., T\)}
+\noindent To further show how Actor-Critic algorithm performs, we compare it 
+to another two popular algorithms: Reinforce 
+(Algorithm~\ref{algorithm:reinforce}) and PPO (Algorithm~\ref{algorithm:ppo}).
+\begin{algorithm}
+    \caption{Reinforce for our financial problem}\label{algorithm:reinforce}
+    \begin{algorithmic}[1]
+        \State Initialize ANN policy parameterization
+        \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
+        \State Step sizes \(\alpha_{\bm{\theta}}>0\)
+        \Loop \hspace{0.3mm} (for each episode)
+        \State Reset the environment
+        \State Generate an episode 
+        \(S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\),
+        following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}\right)\)
+        \For{\(t=0, 1, ..., T\)}
         \State \(G \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
         \State \(\bm{\theta} \gets \bm{\theta} + \alpha_{\bm{\theta}}\gamma^t
         G\nabla{\ln{\pi\left(C_t\middle|S_t, \bm{\theta}\right)}}\)
-    \EndFor
-\EndLoop
-\end{algorithmic}
+        \EndFor
+        \EndLoop
+    \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm}[H]
-\caption{PPO for our financial problem}
-\begin{algorithmic}[1]
-\State Initialize ANN policy parameterization
-\(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
-\State Initialize ANN state-value function parameterization
-\(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
-\State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
-\For{iteration \(k=0, 1, 2, ...\)}
-    \State Collect set of trajectories \(\mathcal{D}_k=\{\tau_i\}\),
-    following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}_k\right)\), where
-    \(\tau = S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\)
-    \For{\(t=0, 1, ..., T\) in each trajectory \(\tau\) in \(\mathcal{D}_k\)}
+\begin{algorithm*}
+    \caption{PPO for our financial problem}\label{algorithm:ppo}
+    \begin{algorithmic}[1]
+        \State Initialize ANN policy parameterization
+        \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
+        \State Initialize ANN state-value function parameterization
+        \(\hat{v}(s,\bm{w})\) with any \(\bm{w}\).
+        \State Step sizes \(\alpha_{\bm{\theta}}>0\), \(\alpha_{\bm{w}}>0\)
+        \For{iteration \(k=0, 1, 2, ...\)}
+        \State Collect set of trajectories \(\mathcal{D}_k=\{\tau_i\}\),
+        following \(\pi\left(\cdot\middle|\cdot, \bm{\theta}_k\right)\), where
+        \(\tau = S_0, C_0, R_1, ..., S_{T-1}, C_{T-1}, R_T\)
+        \For{\(t=0, 1, ..., T\) in each trajectory \(\tau\) in 
+        \(\mathcal{D}_k\)}
         \State \(G_t \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
         \State \(A_t \gets G_t - \hat{v}(S_t)\)
-    \EndFor
-    \Loop \hspace{0.3mm} (update multiple times)
-    \State \(\bm{\theta} \gets \underset{\bm{\theta}}{\text{arg\:max}}
-    \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
-    \min{\left(
-            \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
-            {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t,
-            \text{clip}\left(
+        \EndFor
+        \Loop \hspace{0.3mm} (update multiple times)
+        \State \(\bm{\theta} \gets \underset{\bm{\theta}}{\text{arg\:max}}
+        \frac{1}{|\mathcal{D}_k|T}
+        \sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
+        \min{\left(
                 \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
-                {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)},
-                1-\epsilon, 1+\epsilon
-            \right)A_t
-    \right)}\)
-    \State \(\bm{w} \gets \underset{\bm{w}}{\text{arg\:min}}
-    \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
-    \Bigl(\hat{v}(S_t, \bm{w})-G_t\Bigr)^2\)
-    \EndLoop
-\EndFor
-\end{algorithmic}
-\end{algorithm}
+                {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t,
+                \text{clip}\left(
+                    \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
+                    {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)},
+                    1-\epsilon, 1+\epsilon
+                \right)A_t
+        \right)}\)
+        \State \(\bm{w} \gets \underset{\bm{w}}{\text{arg\:min}}
+        \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
+        \Bigl(\hat{v}(S_t, \bm{w})-G_t\Bigr)^2\)
+        \EndLoop
+        \EndFor
+    \end{algorithmic}
+\end{algorithm*}
 
 \subsection{Training result}
-To make better comparison, the policy function of the two algorithms
+\noindent To make better comparison, the policy function of the two algorithms
 is implemented the same way as we did in Actor-Critic algorithm, and the same
 is true for the value function used in PPO method.
-\vspace{3mm}\newline Figure \ref{fig:2} shows the training result of these
-three algorithms (300 moving average reward vs iteration), with 600 iterations
-(5 episodes per iteration), \(T=300\), \(\gamma=0.99\),
+\vspace{3mm}\newline Figure~\ref{fig:3-algorithms-out} shows the training 
+result of these three algorithms (300 moving average reward vs iteration), 
+with 600 iterations (5 episodes per iteration), \(T=300\), \(\gamma=0.99\),
 \(\alpha_\theta=\num{3e-4}\), \(\alpha_{\bm{w}}=\num{3e-10}\) (if applicable),
 \(\epsilon=0.5\) (if applicable).
 \begin{figure*}
-    \centering\includegraphics[scale=0.67]{out}
-    \caption{Training Result Comparison for Three Algorithm\label{fig:2}}
+    \centering\includegraphics[scale=0.75]{out}
+    \caption{Training Result Comparison for Three Algorithm}
+    \label{fig:3-algorithms-out}
 \end{figure*}
-As is shown in Figure \ref{fig:2}, the Actor-Critic algorithm converges the fastest,
-within 50 iterations, followed by Reinforce algorithm, which converges within
-about 250 iterations, despite a small drop of moving average around iteration
-300, which is quickly corrected by the algorithm within 50 iterations. PPO
-algorithm converges the slowest, with about 300 iterations. Despite of the
-speed of convergence, the moving average rewards of convergence for these
-three algorithms are nearly the same (around 400), this is as expected.
+As is shown in Figure~\ref{fig:3-algorithms-out}, the Actor-Critic algorithm 
+converges the fastest, within 50 iterations, followed by Reinforce algorithm, 
+which converges within about 250 iterations, despite a small drop of moving 
+average around iteration 300, which is quickly corrected by the algorithm 
+within 50 iterations. PPO algorithm converges the slowest, with about 300 
+iterations. Despite of the speed of convergence, the moving average rewards 
+of convergence for these three algorithms are nearly the same (around 400), 
+this is as expected.
 
 \section{Conclusion}
-Provide a brief conclusion (3-4 lines).
+\noindent Provide a brief conclusion (3-4 lines).
 
 \section*{Acknowledgments}
-Place any acknowledgments here.
+\noindent Place any acknowledgments here.
 
 %%%  REFERENCES  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
