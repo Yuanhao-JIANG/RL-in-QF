@@ -139,24 +139,15 @@
 %   \JointFirstAuthor, if applicable, follows the affiliation of the relevant authors, no spaces.
 
 \SetAuthors{%
-	Yuanhao JIANG\affil{1}\JointFirstAuthor\CorrespondingAuthor{}, 
-	Luis Hern\'andez\affil{2}\JointFirstAuthor, 
-	Catherine~Parr\affil{3}\CorrespondingAuthor{s2132254@ed.ac.uk, kate@thepalace.gov}
+	Yuanhao JIANG\affil{1}\CorrespondingAuthor{s2132254@ed.ac.uk}
 	}
 
 \SetAffiliation{1}{The University of Edinburgh, Edinburgh, UK}
-\SetAffiliation{2}{Institution or Company Name, City, State}
-\SetAffiliation{3}{Hampton Court Palace, Richmond, England}
 %	Note: Luis and Maria are not real people.  Henry and Catherine have been dead for >450 years.
 
 %	To switch from inline author names to gridded names, use the [grid] option.
 
 \maketitle
-
-%%% Use this footnote for tracking various versions of your draft. Change text to suit your own needs. 
-%%% \date{..} calls the same command. 
-\versionfootnote{Documentation for \texttt{asmeconf.cls}: Version~\versionno, \today.}% <=== Delete before final submission.
-
 
 %%% Change these to your keywords.  Keywords are automatically printed at the end of the abstract.
 %%% This command MUST COME BEFORE the end of the abstract.
@@ -170,7 +161,7 @@
 %%
 %% Abstract should be 200 words or less
 \begin{abstract}
-\noindent This paper is an example of and a  {\upshape\LaTeX} template for typesetting ASME conference papers using the {\upshape\texttt{asmeconf}} class. This  {\upshape\LaTeX} template follows ASME guidelines for margins, fonts, headings, captions, and reference formats as of 2022. The class is intended to be used with the {\upshape\texttt{asmeconf.bst} \hologo{BibTeX}} style for reference formatting, which is part of this distribution. The template produces pdfs that contain hyperlinks, bookmarks, and metadata; and references can include the DOI and URL fields. Links may be colored, for online use, or black, for publication. The class enables inline author names, following ASME's current style, but can also produce the traditional grid style. Options include line numbering, final column balancing, various math options, government copyright, and archivability (PDF/A). In addition, section headers may contain mathematics, references, citations, and footnotes. The class is compatible with {\upshape\hologo{pdfLaTeX}} or {\upshape\hologo{LuaLaTeX}}.
+\noindent Abstract goes here.
 \end{abstract}
 
 \section{Introduction}
@@ -772,24 +763,6 @@ this is as expected.
 
 \bibliographystyle{asmeconf}  %% .bst file following ASME conference format. Do not change.
 \bibliography{paper_2-col}
-
-%%%  APPENDICES  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\appendix
-
-%% Note that appendices will be "numbered" A, B, C, ... etc. Use \section, not \section*
-%% Equations will be numbered sequentially following those in the paper. Do not reset the equation counter.
-
-%% Here we use the optional argument to control the pdf bookmark and prevent errors.
-\section[The Vector Product A\times B]{The vector product $\vec{A}\times\vec{B}$}\label{appendix:a}
-
-This brief illustration of an appendix shows the numbering of the appendix and equations. Equations are numbered
-consecutively, following those in the paper. Consider $\rho \neq \textrm{fn}(p)$:
-\begin{align}
-\frac{d\Gamma}{dt} &{}= \frac{d}{dt} \int_{\mathcal{C}} \mathbf{u} \cdot d\mathbf{r}\\
-				   &{}= \int_{\mathcal{C}} \frac{D\mathbf{u}}{Dt} \cdot d\mathbf{r} + \underbrace{\int_{\mathcal{C}} \mathbf{u}\cdot d\biggl( \frac{d\mathbf{r}}{dt}\Biggr)}_{=\, 0} \\[-2pt]
-                   &{}= \iint_{\mathcal{S}} \nabla \times \frac{D\mathbf{u}}{Dt}  \cdot d\mathbf{A}\\
-                   &{}= \iint_{\mathcal{S}}  \nabla p \times \nabla \left( \frac{1}{\rho}\right) \cdot d\mathbf{A}
-\end{align}
 
 \end{document}
 
