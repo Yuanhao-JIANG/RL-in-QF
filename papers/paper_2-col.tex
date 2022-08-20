@@ -109,11 +109,9 @@
 }
 
 \begin{document}
-
 % Change these fields to the right content for your conference.
 % You can comment these out if for some reason you don't want a header.
 % Use title case (first letters capitalized), not all capitals
-
 \ConfName{Proceedings of the ASME 2022\linebreak International Mechanical Engineering Congress and Exposition}
 \ConfAcronym{IMECE2022}
 \ConfDate{October 30--November 3, 2022} % update 
@@ -137,14 +135,11 @@
 %   If multiple corresponding authors, put both email addresses in the same command and place after both authors.
 %
 %   \JointFirstAuthor, if applicable, follows the affiliation of the relevant authors, no spaces.
-
-\SetAuthors{%
+\SetAuthors{
 	Yuanhao JIANG\affil{1}\CorrespondingAuthor{s2132254@ed.ac.uk}
-	}
+}
 
 \SetAffiliation{1}{The University of Edinburgh, Edinburgh, UK}
-%	Note: Luis and Maria are not real people.  Henry and Catherine have been dead for >450 years.
-
 %	To switch from inline author names to gridded names, use the [grid] option.
 
 \maketitle
@@ -152,13 +147,8 @@
 %%% Change these to your keywords.  Keywords are automatically printed at the end of the abstract.
 %%% This command MUST COME BEFORE the end of the abstract.
 %%% If you don't want keywords, leave the argument of \keywords{} empty (or use the abstract* environment)
-
 \keywords{Reinforcement Learning, Artificial Neural Networks}
 
-%%%%%  End of fields to be completed. Now write your paper. %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-%%%%%  ABSTRACT  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%%
 %% Abstract should be 200 words or less
 \begin{abstract}
 \noindent Abstract goes here.
@@ -284,19 +274,22 @@ estimated value function at the \(i\)th time \(S_t\) is visitied, which can be
 initialized to anything at start. Now we have the incremental formula to update
 our value function:
 \begin{align*}
-    [v_\pi(S_t)]_{k+1} &= \frac{1}{k}\sum_{i=1}^{k} G_i\\
-               &= \frac{1}{k}\left(G_k + \sum_{i=1}^{k-1} G_i\right)\\
-               &= \frac{1}{k}\left(G_k + (k-1)[v_\pi(S_t)]_{k}\right)\\
-               &= [v_\pi(S_t)]_k + \frac{1}{k}(G_k-[v_\pi(S_t)]_k)\\
-               &= [v_\pi(S_t)]_k + \frac{1}{k}
-               ([R_{t+1}]_k+\gamma [v_\pi(S_{t+1})]_k-[v_\pi(S_t)]_k)
+    &[v_\pi(S_t)]_{k+1} \\
+    =\:& \frac{1}{k}\sum_{i=1}^{k} G_i\\
+    =\:& \frac{1}{k}\left(G_k + \sum_{i=1}^{k-1} G_i\right)\\
+    =\:& \frac{1}{k}\left(G_k + (k-1)[v_\pi(S_t)]_{k}\right)\\
+    =\:& [v_\pi(S_t)]_k + \frac{1}{k}(G_k-[v_\pi(S_t)]_k)\\
+    =\:& [v_\pi(S_t)]_k + \frac{1}{k}
+    ([R_{t+1}]_k+\gamma [v_\pi(S_{t+1})]_k-[v_\pi(S_t)]_k)
 \end{align*}
 To simplify:
 \[v_\pi(S_t)\longleftarrow v_\pi(S_t)+\alpha
 [R_{t+1}+\gamma v_\pi(S_{t+1})-v_\pi(S_t)]\]
 with \(\alpha\) being the stepsize. And this also applies to the q function:
-\[q_\pi(S_t, A_t)\longleftarrow q_\pi(S_t, A_t)+\alpha
-[R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]\]
+\begin{multline*}
+    q_\pi(S_t, A_t)\longleftarrow q_\pi(S_t, A_t)\\
+    +\alpha[R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]
+\end{multline*}
 
 \subsection{Policy Gradient Methods}
 \noindent When the state space is arbitrarily large, we cannot find an optimal 
@@ -514,9 +507,10 @@ which is also a data vector consists of the following entries:
         make sure the agent will promote to all types of customers instead of 
         only focusing on one type. Note that \(\text{var}\leq1\).
 \end{itemize}
-Thus, the state \(s\), or \(s_t\), end up with the form 
-\(s_t=(x'_t[0],\:\dots,\:x'_t[-1],\:\text{avg\_pf}_t,\:\text{p}_t,
-\:\text{var}_t)\), where \(x'_t\) is the modified \(x_t\), including preprocess
+Thus, the state \(s\), or \(s_t\), end up with the form
+\[s_t=
+(x'_t[0],\:\dots,\:x'_t[-1],\:\text{avg\_pf}_t,\:\text{p}_t, \:\text{var}_t)\]
+where \(x'_t\) is the modified \(x_t\), including preprocess
 of converting some categorical data to meaningful data to the model.
 
 \subsection{Reward}
@@ -585,7 +579,7 @@ we will also reset the environment at the start of each episode.
 method, and with the help of what we have built in previous sections, to solve 
 the problem.
 \begin{algorithm}
-    \caption{Actor-Critic for our financial problem
+    \caption{Actor-Critic for financial problem
         \label{algorithm:actor-critic-fin}
     }
     \begin{algorithmic}[1]
@@ -612,7 +606,7 @@ the problem.
         \EndLoop
     \end{algorithmic}
 \end{algorithm}
-\noindent Figure~\ref{fig:a2c-illustration} illustrates the algorithm.
+\noindent And Figure~\ref{fig:a2c-illustration} illustrates the algorithm.
 \begin{figure}
     \centering
     \begin{tikzpicture}[node distance=2cm]
@@ -622,15 +616,15 @@ the problem.
             {\(\pi\left(c\middle|s,\bm{\theta}\right)\)};
         \node (v) [process, right of=pi, xshift=1cm]
             {\(\hat{v}\left(s,\bm{w}\right)\)};
-        \node (env) [process, below of=pi, yshift=-2.5cm] {Environment};
+        \node (env) [process, below of=pi, yshift=-2cm] {Environment};
 
         \draw [arrow] (pi) -- node[anchor=east] {c} (env);
         \draw [arrow] (env)
-            -- ++(0,-2.3) node[anchor=east, yshift=0.8cm] {\(S_{t+1}\)}
+            -- ++(0,-1.7) node[anchor=east, yshift=0.5cm] {\(S_{t+1}\)}
             -- ++(-1.5,0) coordinate(next_s);
-        \draw [arrow] (next_s) -- ++(-1,0) -- ++ (0,10) -- ++(4,0)
+        \draw [arrow] (next_s) -- ++(-1,0) -- ++ (0,8.7) -- ++(4,0)
             -- ++(0,-1.7)
-            node[anchor=east, yshift=0.9cm] {\(S_t\)} coordinate(m1)
+            node[anchor=east, yshift=1cm] {\(S_t\)} coordinate(m1)
             -- (pi.93);
         \draw [arrow] (m1) -- (v.93);
         \draw [arrow] (env)
@@ -640,7 +634,7 @@ the problem.
         \draw [arrow] (v) -- (m2) node[anchor=west, yshift=1.7cm] {\(v\)};
         \draw [dashed,arrow] (m3) -- ++(0,2.2) coordinate(m4) -- (pi.327);
         \draw [dashed,arrow] (m4) -- (v);
-        \draw [dashed, thick] (-3,-6.5) -- (-3,-7.8);
+        \draw [dashed, thick] (-3,-5.4) -- (-3,-6.7);
     \end{tikzpicture}
     \caption{Actor-Critic for Finance Algorithm Illustration}
     \label{fig:a2c-illustration}
@@ -666,7 +660,7 @@ and stays quite stable afterwards.
 to another two popular algorithms: Reinforce 
 (Algorithm~\ref{algorithm:reinforce}) and PPO (Algorithm~\ref{algorithm:ppo}).
 \begin{algorithm}
-    \caption{Reinforce for our financial problem}\label{algorithm:reinforce}
+    \caption{Reinforce for financial problem}\label{algorithm:reinforce}
     \begin{algorithmic}[1]
         \State Initialize ANN policy parameterization
         \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
@@ -686,7 +680,7 @@ to another two popular algorithms: Reinforce
 \end{algorithm}
 
 \begin{algorithm*}
-    \caption{PPO for our financial problem}\label{algorithm:ppo}
+    \caption{PPO for financial problem}\label{algorithm:ppo}
     \begin{algorithmic}[1]
         \State Initialize ANN policy parameterization
         \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
