@@ -147,25 +147,48 @@
 %%% Change these to your keywords.  Keywords are automatically printed at the end of the abstract.
 %%% This command MUST COME BEFORE the end of the abstract.
 %%% If you don't want keywords, leave the argument of \keywords{} empty (or use the abstract* environment)
-\keywords{Reinforcement Learning, Artificial Neural Networks}
+\keywords{
+    Reinforcement Learning, Artificial Neural Networks, Quantitative Finance
+}
 
 %% Abstract should be 200 words or less
 \begin{abstract}
-\noindent Abstract goes here.
+\noindent This paper provides a new way of pricing in the car insurance
+industry, which is, using reinforcement learning algorithms to train pricing 
+agents to promote proper price, such that our customer is most likely to 
+purchase our product, and we also get the highest profit and a better 
+portfolio. 
+We first introduce general reinforcement learning knowledge, including how 
+we model the interaction between agent and environment using MDP, and the 
+mathematics behind those methods to solve the reinforcement learning problem, 
+especially the Actor-Critic algorithm.
+Then we start building the environment, and use ANNs as our pricing models, 
+and writing algorithms that are specific to our financial problem. 
+In the end, we will compare and discuss different algorithms in terms of their
+rate of convergence to a stable reward.
 \end{abstract}
 
 \section{Introduction}
-\noindent The object is to use reinforcement learning to solve the following scenario:
-a customer arrives with a number of features, we want to promote the customer
-with a proper price, such that he is most likely to purchase our product, and 
-we also have the highest profit and a better portfolio. 
-\vspace{3mm}\newline We can consider this scenario as markov decision process,
-with the current state being the current customer features and current 
-portfolio. At each time step, the agent promote a price according to the 
-current customer features and the current portfolio, after that the customer 
-resopnse to the action. The reward is then given besed on the customer 
-response and the portfolio. Then the portfolio updates and a new customer 
-arrives.
+\noindent Modern way of calculating car insurance premium is by estimating
+how much risk the customer poses to the insurance provider, and more risk 
+results in higher premium. 
+The estimation of the risk for a customer is usually done by comparing various
+risk factors with the statistics of the database collected so far. Those 
+factors might include customer's age, address, occupation, car's mileage, 
+brand and model, and so on. For example, younger drivers pose higher risks 
+since they are more likely to have an accident due to the lack of driving 
+experience compare to elder drivers.
+\vspace{2mm}\newline In this paper, instead of using the above method to 
+promote car insurance, we use RL methods to train agents that will interact 
+with the market and response with price. More specifically, we consider the 
+insurance promoting scenario as markov decision process, with the current 
+state being the current customer features and current portfolio. At each time
+step, the agent promote a price according to the current customer features and
+the current portfolio, after that the customer resopnse to the promotion. The 
+reward is then given besed on the customer response and the portfolio. Then 
+the portfolio updates and a new customer arrives. This set up will help us to
+solve the poblem in the context of reinforcement learning, further details are
+discussed in the remaining sections.
 
 \section{Reinforcement Learning}
 \noindent The reinforcement learning method we want to use is based on the Markov 

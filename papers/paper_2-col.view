@@ -11,37 +11,37 @@ setlocal fen
 silent! normal! zE
 1,91fold
 92,110fold
-112,156fold
-157,169fold
-170,206fold
-207,217fold
-218,230fold
-231,240fold
-241,254fold
-255,263fold
-264,293fold
-294,324fold
-294,324fold
-325,359fold
-360,427fold
-428,439fold
-440,462fold
+112,170fold
+171,192fold
+193,229fold
+230,240fold
+241,253fold
+254,263fold
+264,277fold
+278,286fold
+287,316fold
+317,347fold
+317,347fold
+348,382fold
+383,450fold
+451,462fold
 463,485fold
-486,515fold
-516,524fold
-525,571fold
-572,576fold
-577,642fold
-643,656fold
-657,719fold
-720,742fold
-743,745fold
-746,748fold
-749,760fold
+486,508fold
+509,538fold
+539,547fold
+548,594fold
+595,599fold
+600,665fold
+666,679fold
+680,742fold
+743,765fold
+766,768fold
+769,771fold
+772,783fold
 let &fdl = &fdl
-294
+317
 normal! zo
-let s:l = 1 - ((0 * winheight(0) + 29) / 59)
+let s:l = 1 - ((0 * winheight(0) + 23) / 47)
 if s:l < 1 | let s:l = 1 | endif
 keepjumps exe s:l
 normal! zt
