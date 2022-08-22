@@ -11,35 +11,35 @@ setlocal fen
 silent! normal! zE
 1,91fold
 92,110fold
-112,170fold
-171,192fold
-193,229fold
-230,240fold
-241,253fold
-254,263fold
-264,277fold
-278,286fold
-287,316fold
-317,347fold
-317,347fold
-348,382fold
-383,450fold
-451,462fold
-463,485fold
-486,508fold
-509,538fold
-539,547fold
-548,594fold
-595,599fold
-600,665fold
-666,679fold
-680,742fold
-743,765fold
-766,768fold
-769,771fold
-772,783fold
+112,172fold
+173,194fold
+195,231fold
+232,242fold
+243,255fold
+256,265fold
+266,279fold
+280,288fold
+289,318fold
+319,349fold
+319,349fold
+350,384fold
+385,452fold
+453,464fold
+465,487fold
+488,510fold
+511,540fold
+541,549fold
+550,596fold
+597,601fold
+602,667fold
+668,681fold
+682,747fold
+748,764fold
+765,777fold
+778,780fold
+781,792fold
 let &fdl = &fdl
-317
+319
 normal! zo
 let s:l = 1 - ((0 * winheight(0) + 23) / 47)
 if s:l < 1 | let s:l = 1 | endif

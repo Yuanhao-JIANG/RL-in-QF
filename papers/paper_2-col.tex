@@ -159,13 +159,15 @@ agents to promote proper price, such that our customer is most likely to
 purchase our product, and we also get the highest profit and a better 
 portfolio. 
 We first introduce general reinforcement learning knowledge, including how 
-we model the interaction between agent and environment using MDP, and the 
-mathematics behind those methods to solve the reinforcement learning problem, 
-especially the Actor-Critic algorithm.
-Then we start building the environment, and use ANNs as our pricing models, 
-and writing algorithms that are specific to our financial problem. 
-In the end, we will compare and discuss different algorithms in terms of their
-rate of convergence to a stable reward.
+we model the interaction between agent and environment using Markov decision
+process, and the mathematics behind those methods to solve the reinforcement 
+learning problem, especially the Actor-Critic algorithm.
+Then we start building the environment, and use artificial neural networks as 
+our pricing models, and writing algorithms that are specific to our financial 
+problem. 
+In the end, we will compare the Actor-Critic algorithms with other popular 
+algorithms including REINFORCE and PPO in terms of their rate of convergence 
+to a stable reward.
 \end{abstract}
 
 \section{Introduction}
@@ -682,6 +684,9 @@ and stays quite stable afterwards.
 \noindent To further show how Actor-Critic algorithm performs, we compare it 
 to another two popular algorithms: Reinforce 
 (Algorithm~\ref{algorithm:reinforce}) and PPO (Algorithm~\ref{algorithm:ppo}).
+The policy function of the two algorithms is implemented the same way as we 
+did in Actor-Critic algorithm, and the same is true for the value function 
+used in PPO method.
 \begin{algorithm}
     \caption{Reinforce for financial problem}\label{algorithm:reinforce}
     \begin{algorithmic}[1]
@@ -741,10 +746,7 @@ to another two popular algorithms: Reinforce
 \end{algorithm*}
 
 \subsection{Training result}
-\noindent To make better comparison, the policy function of the two algorithms
-is implemented the same way as we did in Actor-Critic algorithm, and the same
-is true for the value function used in PPO method.
-\vspace{3mm}\newline Figure~\ref{fig:3-algorithms-out} shows the training 
+\noindent Figure~\ref{fig:3-algorithms-out} shows the training 
 result of these three algorithms (300 moving average reward vs iteration), 
 with 600 iterations (5 episodes per iteration), \(T=300\), \(\gamma=0.99\),
 \(\alpha_\theta=\num{3e-4}\), \(\alpha_{\bm{w}}=\num{3e-10}\) (if applicable),
@@ -754,17 +756,24 @@ with 600 iterations (5 episodes per iteration), \(T=300\), \(\gamma=0.99\),
     \caption{Training Result Comparison for Three Algorithm}
     \label{fig:3-algorithms-out}
 \end{figure*}
-As is shown in Figure~\ref{fig:3-algorithms-out}, the Actor-Critic algorithm 
-converges the fastest, within 50 iterations, followed by Reinforce algorithm, 
-which converges within about 250 iterations, despite a small drop of moving 
-average around iteration 300, which is quickly corrected by the algorithm 
-within 50 iterations. PPO algorithm converges the slowest, with about 300 
-iterations. Despite of the speed of convergence, the moving average rewards 
-of convergence for these three algorithms are nearly the same (around 400), 
-this is as expected.
+As we can see, the Actor-Critic algorithm converges the fastest, within 50 
+iterations, followed by REINFORCE algorithm, which converges within 250 
+iterations, despite a small drop of moving average around iteration 300, 
+which is quickly corrected by the algorithm within 50 iterations. PPO 
+algorithm converges the slowest, with about 300 iterations.
 
 \section{Conclusion}
-\noindent Provide a brief conclusion (3-4 lines).
+\noindent To summarize, the moving average rewards after convergence of these 
+three algorithms are nearly the same (around 400), which is as expected. 
+The Actor-Critic algorithm performs really well compared to anther two 
+algorithms, it has highest converge rate, the reward is also very stable after 
+convergence. 
+In the mean time, the slow convergence for PPO algorithm is expected since it 
+uses a clamp function to prevent model from changing too fast in a single 
+update, although at current stage it seems to be unnecessary for our specific 
+problem setup. 
+Further investigation needs to be done for the unexpected small drop of the 
+reward for the REINFORCE algorithm.
 
 \section*{Acknowledgments}
 \noindent Place any acknowledgments here.
