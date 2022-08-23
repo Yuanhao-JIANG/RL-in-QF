@@ -1,157 +1,51 @@
-% !TEX encoding = UTF-8 Unicode
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-%%
-%%  This file is asmeconf-template.tex, a LaTeX template to format ASME Conference papers according to
-%%  the requirements on ASME's conference web pages, and including hypertext support for the pdf.
-%%
-%%  This file is version 1.31 dated 2022/07/04
-%%  
-%%  As of version 1.11, this template defaults to ASME's newer conference guidelines first posted July 2019.
-%% 			Those guidelines changed the requested author block formatting to be inline. 
-%%			This LaTeX template continues to support the traditional grid format as a package option, [grid].
-%%			Nomenclature now follows the abstract. Abstract text is set in italics.
-%%
-%%  Author: John H. Lienhard V
-%%          Department of Mechanical Engineering
-%%          Massachusetts Institute of Technology
-%%          Cambridge, MA 02139-4307 USA
-%%
-%%  Class options include:
-%%
-%%          * Math options from M. Sharpe's newtxmath package: upright integrals [upint]; 
-%%          *    [varvw] for a v and w that are better distinguished from Greek nu; and also 
-%%          *    [subscriptcorrection, smallerops, varg, frenchmath, varbb, cmbraces, slantedGreek,...] 
-%%			* 	 See newtx documentation for descriptions (at CTAN: http://ctan.org, v1.6 or higher is best).
-%%
-%%          * Options to: 	omit the ASME copyright footer [nofoot]; 
-%%			*				use government employee copyright notice [govt];
-%%			*				use government contractor copyright notice [contractor]
-%%
-%%          * An option to use the traditional grid arrangement of author names [grid].  
-%%			*	 With this option, line breaks (\\) may be inserted into the address as needed. 
-%%			*	 Author names that include commas should be enclosed in braces, e.g., {Joseph L. Smith, Jr.}.  
-%%			*	 Authors may be grouped above a single affiliation using braces, e.g., {Henry Tudor, Catherine Parr}.
-%%
-%%          * An option to balance the heights of columns on the last page [balance]. 
-%%          *    This option is NOT compatible with the [lineno] option.
-%%
-%%          * An option to include line numbers [lineno]. You must *run twice* for proper placement of the line numbers. 
-%%			*	 The lineno package does not number titles, footnotes, captions, or tables.
-%%          *    This option will disable balancing column height on final page if that option has been invoked.
-%%          *    The lineno package won't always number the lines preceding displayed math in a paragraph because
-%%          *    paragraph has not ended.  See that package's documentation for macros to address this problem, or
-%%          *    just leave a blank line above the displayed equation while you are editing and then remove the 
-%%          *    blank line and [lineno] option when you move to your final version.
-%%
-%%			* Options for PDF/A compliance. [pdf-a] will produce PDF/A-3u compliance with sRGB OutputIntent.
-%%			*	 [pdfapart= 1 or 2 or 3] and [pdfaconformance= b or u] can enable levels 1b, 2b, 2u, and 3b.
-%%			*    The most recent versions of LaTeX (2021 and later) are moving toward integrated support for pdf-a, 
-%%			*    through \DeclareDocumentMetadata{..}. The asmeconf class supports these new features, which can 
-%%			*	 replace the aforementioned class options. (An up-to-date LaTeX installation is required to use this.)
-%%
-%%          * Many options for calligraphic, script, and fraktur fonts from the mathalfa package; the
-%%          *    example shown here is: [mathalfa=cal=boondoxo] to use a Boondox font for \mathcal.
-%%          *    Some other options for cal are: dutchcal, zapfc, cm (default), euler,...
-%%          *    frak (fraktur), bb (blackboard bold), scr (script) may also be chosen this way.
-%%			*	 For details, refer to mathalfa documentation (at CTAN: http://ctan.org).
-%%
-%%          * Option to use superiors font from newtxtext for footnotes [nodefaultsups] and
-%%          *    for slightly larger small capitals, [largesc], also from newtxtext.
-%%
-%%          * An option to allow hyphenation of the typewriter font [hyphenate], from inconsolata package.
-%%          *    Hyphenation is normally suppressed for typewriter mode because it is often used for code.
-%%			*	 To replace the default variable word spacing by monospacing, use the option [mono].
-%%			*	 To get a zero without a slash, use [var0]
-%%
-%%          * Options (used by the babel package) to include passages in languages other than English (e.g., a translation 
-%%			*    of the abstract). Languages are called as options, e.g. [french], [spanish], [greek], [russian], etc. 
-%%			*    Language support is greatest when running LuaLaTeX with the [fontspec] option.
-%%			*    See Appendix B for details.
-%%
-%%  The use of commands defined or modified by the asmeconf class is illustrated throughout this file. In particular, 
-%%  ASME requires capitalized, sans-serif section headings, and as a result some care is needed when using macros 
-%%  in section headings, as also illustrated below.
-%%
-%%  Use an up-to-date and complete installation of LaTeX, such as TeX Live 2020 or later. Errors may occur with old set-ups.
-%%
- %=========================================================
-%% 
-%% LICENSE: 
-%%
-%% Copyright (c) 2022 John H. Lienhard
-%%
-%% Offered under the MIT license: https://ctan.org/license/mit 
-%%
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% 
-
-%% Class options are described above. Change these options as desired. 
-%%		If you are not using the language options, remove them (together with Appendices B and C)
-%%	 	Remove the [colorlinks] option before *final* submission to ASME, to get black text for printing,
-%%		but keep that option for other uses.
- 
-\documentclass[balance,upint,subscriptcorrection,varvw,mathalfa=cal=boondoxo,pdf-a,colorlinks,nofoot]{asmeconf}
+\documentclass[balance,upint,subscriptcorrection,varvw,mathalfa=cal=boondoxo,pdf-a,nofoot]{asmeconf}
 \usepackage{tikz}
 \usetikzlibrary{shapes.geometric, arrows.meta}
-\tikzstyle{process} = [rectangle, minimum width=2cm, minimum height=1.3cm, text centered, draw=black]
+\tikzstyle{process} = [
+    rectangle, minimum width=2cm, minimum height=1.3cm, text centered, 
+    draw=black
+]
 \tikzstyle{arrow} = [thick,->,>={Stealth[scale=1.1]}]
 \usepackage{algorithm, algpseudocode}
 \usepackage{siunitx}
 \graphicspath{ {../data/} }
-%%%%%  pdf metadata  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-\hypersetup{%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%  pdf metadata  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\hypersetup{
 	pdfauthor={Yuanhao JIANG},
-	pdftitle={Mathematics of Reinforcement Learning with Applications to Quantitative Finance},
-	pdfkeywords={Reinforcement Learning,  Artificial Neural Networks},
-	pdfsubject={Describe Mathematics of Reinforcement Learning with Applications to Quantitative Finance},
+	pdftitle={
+        Mathematics of Reinforcement Learning with Applications to 
+        Quantitative Finance
+    },
+	pdfkeywords={
+        Reinforcement Learning,  Artificial Neural Networks, Quantitative 
+        Finance
+    },
+	pdfsubject={
+        Describe Mathematics of Reinforcement Learning with Applications to 
+        Quantitative Finance
+    },
     pdfurl={https://github.com/Yuanhao-JIANG/RL-in-QF},
-%	pdflicenseurl={https://ctan.org/pkg/asmeconf},
 }
 
 \begin{document}
-% Change these fields to the right content for your conference.
-% You can comment these out if for some reason you don't want a header.
-% Use title case (first letters capitalized), not all capitals
-\ConfName{Proceedings of the ASME 2022\linebreak International Mechanical Engineering Congress and Exposition}
-\ConfAcronym{IMECE2022}
-\ConfDate{October 30--November 3, 2022} % update 
-\ConfCity{Columbus, OH} % update 
-\PaperNo{IMECE2022-XXXX}
+\title{
+    Mathematics of Reinforcement Learning with Applications to Quantitative 
+    Finance
+}
 
-% Units of measure (e.g., cm) and other specialty lowercase terms in the title should be 
-%   enclosed in \NoCaseChange{...} to maintain lower case type
-%   LaTeX will automatically set the rest of the title in all capital letters.
-
-\title{Mathematics of Reinforcement Learning with Applications to Quantitative Finance}
-%\title{Place Title Here: Place Subtitle After Colon} 
- 
-%   Put author names into the order you want. Use the same order for affiliations.
-%   \affil{#} tags the author's affiliation to the address in \SetAffiliation{#}.
-%   No space between last name and \affil{#}, separate names with commas.
-%
-%	For a sole author or a single affiliation for all authors, {#} may be left empty, as \affil{} and \SetAffiliation{} (but not with [grid] option!)
-%
-%   \CorrespondingAuthor{email} follows that author's affiliation, no spaces.  
-%   If multiple corresponding authors, put both email addresses in the same command and place after both authors.
-%
-%   \JointFirstAuthor, if applicable, follows the affiliation of the relevant authors, no spaces.
 \SetAuthors{
 	Yuanhao JIANG\affil{1}\CorrespondingAuthor{s2132254@ed.ac.uk}
 }
 
 \SetAffiliation{1}{The University of Edinburgh, Edinburgh, UK}
-%	To switch from inline author names to gridded names, use the [grid] option.
 
 \maketitle
 
-%%% Change these to your keywords.  Keywords are automatically printed at the end of the abstract.
-%%% This command MUST COME BEFORE the end of the abstract.
-%%% If you don't want keywords, leave the argument of \keywords{} empty (or use the abstract* environment)
 \keywords{
     Reinforcement Learning, Artificial Neural Networks, Quantitative Finance
 }
 
-%% Abstract should be 200 words or less
 \begin{abstract}
 \noindent This paper provides a new way of pricing in the car insurance
 industry, which is, using reinforcement learning algorithms to train pricing 
@@ -217,7 +111,7 @@ decision process (MDP), as illustrated in Figure~\ref{fig:MDP-illustration}.
             {\(A_t\)} |- (env);
         \draw [dashed,thick] (-2.7,-1.5) -- (-2.7, -3.2);
     \end{tikzpicture}
-    \caption{MDP Illustration}
+    \caption{MDP Illustration~\cite{Sutton1998}}
     \label{fig:MDP-illustration}
 \end{figure}
 \noindent However, in RL, the agent is not told which actions to take, but 
@@ -255,7 +149,8 @@ for all \(s\).
 
 \subsection{Policy Iteration}
 \noindent By iteratively applying policy evaluation and policy improvement, we
-can obtain a sequence of monotonically improving policies and value functions:
+can obtain a sequence of monotonically improving policies and value 
+functions~\cite{Sutton1998} :
 \[\pi_0 \overset{E}{\longrightarrow} v_{\pi_0} \overset{I}{\longrightarrow}
 \pi_1 \overset{E}{\longrightarrow} v_{\pi_1} \overset{I}{\longrightarrow}
 \dots \overset{I}{\longrightarrow} \pi_* \overset{E}{\longrightarrow} v_*\]
@@ -268,7 +163,7 @@ finding an optimal policy is called policy iteration.
 involves policy evaluation, which itself is a protracted iterative computation
 requiring multiple sweeps through the state set.
 \vspace{3mm}\newline We now truncate the policy evaluation such that it is
-stopped after just one sweep (one update of each state):
+stopped after just one sweep~\cite{Sutton1998} (one update of each state):
 \begin{align*}
     v_{k+1}(s)&=\underset{a}{\text{max}}\:q(s, a)\\
               &=\underset{a}{\text{max}}\:\mathbb{E}\left[
@@ -277,7 +172,7 @@ stopped after just one sweep (one update of each state):
 We keep iterate until \(v\) converges (to \(v_*\)), then we record the last
 policy \(\pi(s) = \underset{a}{\text{argmax}}\:q(s, a)\).
 
-\subsection{Generalized Policy Iteration}
+\subsection{Generalized Policy Iteration~\cite{Sutton1998}}
 \noindent As long as both processes, policy evaluation and policy improvement,
 continue to update all states, the ultimate result is typically the 
 same --- converge to the optimal value function and an optimal policy.
@@ -316,7 +211,7 @@ with \(\alpha\) being the stepsize. And this also applies to the q function:
     +\alpha[R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]
 \end{multline*}
 
-\subsection{Policy Gradient Methods}
+\subsection{Policy Gradient Methods~\cite{Sutton1998}}
 \noindent When the state space is arbitrarily large, we cannot find an optimal 
 policy or the optimal value function given the limited resources and time. 
 Instead of keeping track of the value and the action(s) to select for each 
@@ -671,7 +566,7 @@ Algorithm~\ref{algorithm:actor-critic} (300 moving average reward vs
 iteration), with 600 iterations (5 episodes per iteration), \(T=300\), 
 \(\gamma=0.99\), \(\alpha_\theta=\alpha_{\bm{w}}=\num{3e-4}\).
 \begin{figure*}
-    \centering\includegraphics[scale=0.75]{a2c_out}
+    \centering\includegraphics[scale=0.7]{a2c_out}
     \caption{Training Result for Algorithm a2c}
     \label{fig:a2c-out}
 \end{figure*}
@@ -682,13 +577,14 @@ and stays quite stable afterwards.
 \section{Actor-Critic, Reinforce, and PPO}
 \subsection{Algorithms}
 \noindent To further show how Actor-Critic algorithm performs, we compare it 
-to another two popular algorithms: Reinforce 
+to another two popular algorithms: REINFORCE
 (Algorithm~\ref{algorithm:reinforce}) and PPO (Algorithm~\ref{algorithm:ppo}).
 The policy function of the two algorithms is implemented the same way as we 
 did in Actor-Critic algorithm, and the same is true for the value function 
 used in PPO method.
 \begin{algorithm}
-    \caption{Reinforce for financial problem}\label{algorithm:reinforce}
+    \caption{Reinforce for financial problem~\cite{Sutton1998}}
+    \label{algorithm:reinforce}
     \begin{algorithmic}[1]
         \State Initialize ANN policy parameterization
         \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
@@ -707,8 +603,9 @@ used in PPO method.
     \end{algorithmic}
 \end{algorithm}
 
-\begin{algorithm*}
-    \caption{PPO for financial problem}\label{algorithm:ppo}
+\begin{algorithm}
+    \caption{PPO for financial problem~\cite{SpinningUp2018}}
+    \label{algorithm:ppo}
     \begin{algorithmic}[1]
         \State Initialize ANN policy parameterization
         \(\pi\left(c\middle|s, \bm{\theta}\right)\), with any \(\bm{\theta}\)
@@ -724,26 +621,23 @@ used in PPO method.
         \State \(G_t \gets \sum_{k=t+1}^{T} \gamma^{k-t-1}R_k\)
         \State \(A_t \gets G_t - \hat{v}(S_t)\)
         \EndFor
-        \Loop \hspace{0.3mm} (update multiple times)
+        \Loop \hspace{0.3mm} (update multiple times)\vspace{1mm}
+        \State \(r \gets \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
+        {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}\)\vspace{1.2mm}
+        \State \(L \gets \min{\left(
+                rA_t,
+                \text{clip}\left(r, 1-\epsilon, 1+\epsilon\right)A_t 
+        \right)}\)\vspace{1mm}
         \State \(\bm{\theta} \gets \underset{\bm{\theta}}{\text{arg\:max}}
         \frac{1}{|\mathcal{D}_k|T}
-        \sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
-        \min{\left(
-                \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
-                {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)}A_t,
-                \text{clip}\left(
-                    \frac{\pi\left(c_t\middle|S_t, \bm{\theta}\right)}
-                    {\pi\left(c_t\middle|S_t, \bm{\theta}_k\right)},
-                    1-\epsilon, 1+\epsilon
-                \right)A_t
-        \right)}\)
+        \sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T} L\)
         \State \(\bm{w} \gets \underset{\bm{w}}{\text{arg\:min}}
         \frac{1}{|\mathcal{D}_k|T}\sum_{\tau\in\mathcal{D}_k}^{} \sum_{t=0}^{T}
         \Bigl(\hat{v}(S_t, \bm{w})-G_t\Bigr)^2\)
         \EndLoop
         \EndFor
     \end{algorithmic}
-\end{algorithm*}
+\end{algorithm}
 
 \subsection{Training result}
 \noindent Figure~\ref{fig:3-algorithms-out} shows the training 
@@ -752,7 +646,7 @@ with 600 iterations (5 episodes per iteration), \(T=300\), \(\gamma=0.99\),
 \(\alpha_\theta=\num{3e-4}\), \(\alpha_{\bm{w}}=\num{3e-10}\) (if applicable),
 \(\epsilon=0.5\) (if applicable).
 \begin{figure*}
-    \centering\includegraphics[scale=0.75]{out}
+    \centering\includegraphics[scale=0.7]{out}
     \caption{Training Result Comparison for Three Algorithm}
     \label{fig:3-algorithms-out}
 \end{figure*}
@@ -774,9 +668,6 @@ update, although at current stage it seems to be unnecessary for our specific
 problem setup. 
 Further investigation needs to be done for the unexpected small drop of the 
 reward for the REINFORCE algorithm.
-
-\section*{Acknowledgments}
-\noindent Place any acknowledgments here.
 
 %%%  REFERENCES  %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
