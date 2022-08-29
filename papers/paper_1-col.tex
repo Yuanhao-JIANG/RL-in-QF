@@ -212,10 +212,8 @@ To simplify:
 \[v_\pi(S_t)\longleftarrow v_\pi(S_t)+\alpha
 [R_{t+1}+\gamma v_\pi(S_{t+1})-v_\pi(S_t)]\]
 with \(\alpha\) being the stepsize. And this also applies to the q function:
-\begin{multline*}
-    q_\pi(S_t, A_t)\longleftarrow q_\pi(S_t, A_t)\\
-    +\alpha[R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]
-\end{multline*}
+\[q_\pi(S_t, A_t)\longleftarrow 
+q_\pi(S_t, A_t)+\alpha[R_{t+1}+\gamma q_\pi(S_{t+1}, A_{t+1})-q_\pi(S_t, A_t)]\]
 
 \subsection{Policy Gradient Methods}
 \noindent When the state space is arbitrarily large, we cannot find an optimal 
