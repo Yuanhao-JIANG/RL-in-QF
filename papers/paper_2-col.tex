@@ -361,9 +361,11 @@ profit on this customer and the portfolio up to now.
 \noindent A customer's features is represented by an array (or vector), denoted 
 by \(x\) with 16 entries with each generated randomly from a distribution, 
 including normal distribution, binomial distribution, and so on. For example, 
-a feature vector \(x\) is described as Table \ref{tab:1}
+a feature vector \(x\) is described as Table \ref{tab:feature-vector}
 \begin{table*}
-    \caption[Table]{Customer Feature Vector Description\label{tab:1}}
+    \caption[Table]{
+        Customer Feature Vector Description\label{tab:feature-vector}
+    }
     \centering
     \begin{tabular}{c|c|c|c|c|c|c|c}
         gender & age & car cost & miles & brand & random feature 0 & random 
@@ -386,9 +388,10 @@ is a vector of a customer features vector \(x\) appended with a price \(c\),
 i.e. \(r=glm(x[0], \dots, x[15], c)\).
 \vspace{3mm}\newline The GLM used in the project is fitted using a randomly
 generated data set with each observation is a customer's features followed by 
-a price, then followed by a resopnse, as illustrated by Table \ref{tab:2}.
+a price, then followed by a resopnse, as illustrated by 
+Table \ref{tab:response}.
 \begin{table*}
-    \caption[Table]{Customer Feature Vector Description\label{tab:2}}
+    \caption[Table]{Customer Resopnse Examples\label{tab:response}}
     \centering
     \begin{tabular}{c|c|c|c|c|c}
         & customer feature 0 & \dots & customer feature 15 & price & resopnse\\
