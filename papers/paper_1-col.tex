@@ -1,5 +1,6 @@
 \documentclass{article}
 \usepackage{arxiv}
+\usepackage{cite}
 \usepackage{amsmath, amsfonts, bm, hyperref, siunitx, algorithm, algpseudocode}
 
 \usepackage{tikz}
@@ -70,6 +71,8 @@ to a stable reward.
     Quantitative Finance
 }
 
+\tableofcontents
+
 \section{Introduction}
 \noindent Modern way of calculating car insurance premium is by estimating
 how much risk the customer poses to the insurance provider, and more risk 
@@ -94,8 +97,9 @@ discussed in the remaining sections.
 
 \section{Reinforcement Learning}
 \noindent The reinforcement learning method we want to use is based on the Markov 
-decision process (MDP), as illustrated in Figure~\ref{fig:MDP-illustration}.
-\begin{figure}
+decision process (MDP)~\cite{Sutton1998, menache2005basis}, as illustrated in 
+Figure~\ref{fig:MDP-illustration}.
+\begin{figure}[H]
     \centering
     \begin{tikzpicture}
         \node (agent) [process, minimum width=2cm, minimum height=2cm,
@@ -143,7 +147,7 @@ function.
 \subsection{Policy Improvement}
 \noindent Now we have the evaluated value function for the policy, we want to 
 improve it accordingly. To do this, we introduce the q-function under 
-policy \(\pi\)
+policy \(\pi\)~\cite{Sutton1998}
 \[q_\pi(s, a) = \mathbb{E}\left[R_{t+1} + \gamma v_\pi(S_{t+1})\;\middle|\;
 S_t=s, A_t=a\right]\]
 The policy improvement theorem says that, let \(\pi\) and \(\pi'\) be any pair
@@ -183,16 +187,22 @@ policy \(\pi(s) = \underset{a}{\text{argmax}}\:q(s, a)\).
 continue to update all states, the ultimate result is typically the 
 same --- converge to the optimal value function and an optimal 
 policy~\cite{Sutton1998}.
-\vspace{3mm}\newline Generalized policy iteration (GPI) is used to refer to the
-general idea of letting policy evaluation and policy improvement interact,
-independent of the granularity of the two processes~\cite{Sutton1998} 
-(instead of letting each complete before the other begins).
+\vspace{3mm}\newline The general idea of alternating policy evaluation and 
+policy improvement, independent of the frequency and convergence of the two 
+processes~\cite{Sutton1998} (instead of letting each complete before the other 
+begins) is called Generalized Policy Iteration (GPI).
 
 \subsection{Temporal-Difference Learning}
 \noindent When we don't have the complete model of the environment, we need to 
 estimate the value function from only experience. There are two methods to do 
-so: Monte Carlo Methods and Temporal-Difference. We will use 
-Temporal-Difference method in this project.
+so: Monte Carlo Methods and 
+Temporal-Difference 
+Method~\cite{menache2005basis, sutton1988learning, Sutton1998}. We will use 
+Temporal-Difference method (more specifically, the TD(0) method, which 
+converges to the maximum likelihood estimate of the function we 
+estimate~\cite{sutton1988learning}) in this project, since the Monte Carlo 
+methods might have higher variance than Temporal-Difference 
+method~\cite{hambly2021recent, franccois2019overfitting, von2011statistical}.
 \vspace{3mm}\newline To estimate \(v_\pi(S_t)\) using only the experience, we 
 take the average on all experienced trajectory' values. Temporal-Difference
 method uses \(G_i = [R_{t+1}]_i+\gamma [v_\pi(S_{t+1})]_i\) to estimate the 
@@ -248,7 +258,7 @@ expection approximates the gradient of the performance measure w.r.t
 \(\bm{\theta}_t\).
 
 \subsubsection{The Policy Gradient Theorem}
-The policy gradient theorem says
+The policy gradient theorem~\cite{sutton1999policy} says
 \[\nabla J(\bm{\theta})\propto \sum_{s} \mu(s)
 \sum_{a} q_\pi(s,a)\nabla\pi\left(a\middle|s, \bm{\theta}\right)\]
 where \(\mu\) is the stationary distribution of the state. Thus we can derive
@@ -282,11 +292,11 @@ And the discounted version of above is:
 One natural choice for baseline is an estimate of the state value,
 \(\hat{v}(S_t, \bm{w})\), where \(\bm{w}\) is the weight vector to be learned.
 
-\subsubsection{Actor-Critic Methods}
+\subsubsection{Actor-Critic Methods}\label{Actor-Critic Methods}
 Recall the TD method, we make use of 
 \(q_\pi(s,a)=\mathbb{E}\left[R_{t+1}+\gamma v_\pi(S_{t+1})\;\middle|\;
 S_t=s, A_t=a\right]\), by taking one sample estimate, and choosing
-\(\hat{v}(S_t, \bm{w})\) as baseline, we have
+\(\hat{v}(S_t, \bm{w})\) as baseline~\cite{Sutton1998}, we have
 \[\nabla J(\bm{\theta})\propto\mathbb{E}_\pi\left[
         \Bigl(R_{t+1}+\gamma \hat{v}(S_{t+1}, \bm{w})-\hat{v}(S_t, \bm{w})\Big)
         \frac{\nabla\pi\left(A_t\middle|S_t, \bm{\theta}\right)}
@@ -322,8 +332,11 @@ take one sample estimate, which gives us the update formula for \(\bm{w}\):
     \Bigr)\nabla \hat{v}(S_t, \bm{w}_t)\\
     &=\bm{w}_t - \alpha_{\bm{w}}\delta_t\nabla \hat{v}(S_t, \bm{w}_t)
 \end{align*}
-The actor-critic method is based on the above updates formulas, details are
-shown in Algorithm \ref{algorithm:actor-critic}.
+The actor-critic method based on the above updates formulas, updating policy
+parameter \(\bm{\theta}\) and value function weight \(\bm{w}\) simultaneously 
+at each time step, is called two time-scale (natural) actor-critic 
+algorithms~\cite{xu2020non, hambly2021recent}, details of the algorithm itself 
+are shown in Algorithm \ref{algorithm:actor-critic}~\cite{Sutton1998}.
 \begin{algorithm}
     \caption{Actor-Critic\label{algorithm:actor-critic}}
     \begin{algorithmic}[1]
@@ -395,7 +408,7 @@ i.e. \(r=glm(x[0], \dots, x[15], c)\).
 generated data set with each observation is a customer's features followed by 
 a price, then followed by a resopnse, as illustrated by 
 Table \ref{tab:response}.
-\begin{table}[H]
+\begin{table}
     \caption[Table]{
         Customer Resopnse Examples\label{tab:response}
     }
@@ -433,7 +446,7 @@ which is also a data vector consists of the following entries:
         variance of the 4 portions:
         \[\text{var}=\text{Var}(\text{pt})=\frac{\sum_{i=1}^{4} 
         \left(\text{pt}_i-\bar{\text{pt}}\right)^2}{3}\]
-        Later we use this to compute reward to 
+        \vspace{1mm}Later we use this to compute reward to 
         make sure the agent will promote to all types of customers instead of 
         only focusing on one type. Note that \(\text{var}\leq1\).
 \end{itemize}
@@ -455,10 +468,12 @@ this project I choose \(h\) to be such that
 \section{Build the model}
 \noindent With the environment well built, we now build the model for our 
 policy and the value function. In this project we use artificial neuro networks
-(ANNs) as the parameterized policy and value function, each with three linear 
-layers, and with the ReLU function as the activation function. And the input 
-of both function is the state, as illustrated in Figure~\ref{fig:ANN}.
-\begin{figure}[H]
+(ANNs) to parameterize our policy and value function as it suits well on 
+algorithms like Actor-Critic, REINFORCE, PPO and so on (for details see 
+\cite{wang2019neural, liu2019neural}). Each of our ANNs has three linear 
+layers, with the ReLU function as the activation function. And the input of 
+both function is the state, as illustrated in Figure~\ref{fig:ANN}.
+\begin{figure}
     \centering
     \[S_t\rightarrow\underset{\text{ANN for value function}}{
             \boxed{
@@ -505,9 +520,10 @@ each episode has finite time steps, \(T\), to be specified as a constant, and
 we will also reset the environment at the start of each episode.
 
 \subsection{The Algorithm}
-\noindent Algorithm \ref{algorithm:actor-critic-fin} uses RL with actor-critic 
-method, and with the help of what we have built in previous sections, to solve 
-the problem.
+\noindent Algorithm \ref{algorithm:actor-critic-fin} uses (two time-scale) 
+actor-critic method~\cite{xu2020non, hambly2021recent, Sutton1998}, and with 
+the help of what we have built in previous sections (especially 
+subsection~\ref{Actor-Critic Methods}), to solve the problem.
 \begin{algorithm}
     \caption{Actor-Critic for financial problem
         \label{algorithm:actor-critic-fin}
@@ -587,8 +603,9 @@ and stays quite stable afterwards.
 \section{Actor-Critic, Reinforce, and PPO}
 \subsection{Algorithms}
 \noindent To further show how Actor-Critic algorithm performs, we compare it 
-to another two popular algorithms: REINFORCE
-(Algorithm~\ref{algorithm:reinforce}) and PPO (Algorithm~\ref{algorithm:ppo}).
+to another two popular algorithms: REINFORCE~\cite{williams1992simple}
+(Algorithm~\ref{algorithm:reinforce}) and PPO~\cite{schulman2017proximal} 
+(Algorithm~\ref{algorithm:ppo}).
 The policy function of the two algorithms is implemented the same way as we 
 did in Actor-Critic algorithm, and the same is true for the value function 
 used in PPO method.
@@ -676,13 +693,13 @@ The Actor-Critic algorithm performs really well compared to anther two
 algorithms, it has highest converge rate, the reward is also very stable after 
 convergence. 
 In the mean time, the slow convergence for PPO algorithm is expected since it 
-uses a clamp function to prevent model from changing too fast in a single 
-update, although at current stage it seems to be unnecessary for our specific 
-problem setup. 
+uses a clip function to prevent model from changing too fast in a single 
+update~\cite{schulman2017proximal, SpinningUp2018}, although at current stage 
+it seems to be unnecessary for our specific problem setup. 
 Further investigation needs to be done for the unexpected small drop of the 
 reward for the REINFORCE algorithm.
 
-\bibliographystyle{plain}
+\bibliographystyle{unsrt}
 \bibliography{references}
 
 \end{document}
